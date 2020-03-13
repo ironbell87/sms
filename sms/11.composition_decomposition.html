@@ -1,0 +1,63 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <script type="text/javascript" src="../javascripts/jquery-1.10.2.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script type="text/javascript" src="../javascripts/00.svg_basics.js"></script>
+    <script type="text/javascript" src="../javascripts/11.composition_decomposition.js"></script>
+    <link rel="stylesheet" type="text/css" media="screen" href="../stylesheets/main.css">
+    <link rel="shortcut icon" href="https://ironbell87.github.io/structural_mechanics_II/images/ironbell_icon.png">
+    <title>Composition and decomposition of a force</title>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="header_space">
+        <a class="header_logo" href="https://ironbell87.github.io/sms"></a>
+        <a class="header_title">Composition and decomposition of a force</a>
+        <a class="header_email" href="mailto:ironbell@kyungnam.ac.kr">by @ironbell</a>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="outer_space">
+        <div id="inner_space">
+            <div id="contents_space">
+                <br />
+                <div id="input_space">
+                    <p style="text-align: left;">1. Simulation setting</p>
+                    <div id="prob_space">
+                        <svg id="prob_svg" width="700px" height="700px">
+                            Sorry, your browser does not support inline SVG.
+                        </svg>
+                    </div>
+                    <br /><input class="smt_measurement" type="button" value="Click to measure angle!" /><br /><br />
+                </div>
+                <div class="separator"></div><br />
+                <div id="output_space" hidden>
+                    <p>2. Measurement</p>
+                    <div id="measurement_space">
+                        <svg id="measurement_svg" width="700px" height="300px">
+                            Sorry, your browser does not support inline SVG.
+                        </svg>
+                    </div>
+                </div>
+                <div id="div_input_outer" hidden>
+                    <div id="div_input_inner">
+                        <input type="number" id="input_number" placeholder="input number" autofocus />
+                        <input type="submit" id="submit_number" value="submit" /><br />
+                        <select id="select_load_type" hidden>
+                            <option value="point" selected>point</option>
+                            <option value="uniform">uniform</option>
+                        </select>
+                        <span id="span_number" hidden></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

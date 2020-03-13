@@ -1,0 +1,277 @@
+﻿/*******************************************************************************
+* Basic style
+*******************************************************************************/
+@import url('https://fonts.googleapis.com/css?family=Nanum+Gothic:400,700,800');
+
+* {
+    margin: 0px;
+    padding: 0px;
+    border: 0px;
+    font-family: 'Nanum Gothic', 'Myriad Pro', Calibri, Helvetica, Arial, sans-serif; font-size: 14px;
+    color: grey; /* font color; 00=no color; ff=full color */
+    /*line-height: 1.8;*/
+    vertical-align: baseline;
+    -webkit-font-smoothing: antialiased;
+}
+
+html, body {
+    /*background-color: #eeeeee;*/
+    height: 100%;
+    font-size: 16px;
+    font-family: 'Myriad Pro', Calibri, Helvetica, Arial, sans-serif;
+    line-height: 2.0 /*1.5*/;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+}
+
+li {
+    margin-left: 40px
+}
+
+a {
+    text-decoration: none;
+    color: #ff6f6f;
+    text-shadow: none;
+
+    transition: color 0.5s ease;
+    transition: text-shadow 0.5s ease;
+    -webkit-transition: color 0.5s ease;
+    -webkit-transition: text-shadow 0.5s ease;
+    -moz-transition: color 0.5s ease;
+    -moz-transition: text-shadow 0.5s ease;
+    -o-transition: color 0.5s ease;
+    -o-transition: text-shadow 0.5s ease;
+    -ms-transition: color 0.5s ease;
+    -ms-transition: text-shadow 0.5s ease;
+}
+
+.separator {
+    left: 0px;
+    right: 0px;
+    height: 2px;
+    margin-top: 20px;
+    background-color: #e7e7e7;
+}
+
+
+
+/*******************************************************************************
+* header and project title
+*******************************************************************************/
+
+.header_space {
+    /*border: 3px solid #73AD21;*/
+    background-color: white;
+    height: 70px;
+    padding-bottom: 1px;
+    background: linear-gradient(to right, SteelBlue, Chartreuse, Cornsilk, firebrick) left bottom white no-repeat;
+    background-size: 100% 1px;
+    box-shadow: 3px 3px 20px #ccc;
+}
+
+.header_logo {
+    /*border: 1px solid #73AD21;*/
+    position: absolute;
+    top: 20px;
+    left: 15px;
+    z-index: 986; /* large z-index = forefront */
+    background: url("../images/ironbell.png");
+    background-size: 30px 30px; /* reduce the size of image into 50px*/
+    background-repeat: no-repeat;
+    width: 30px; /* width of anchor */
+    height: 30px; /* height of anchor */
+    border-radius: 50%; /* rounded image */
+}
+
+.header_title {
+    /*border: 3px solid #73AD21;*/
+    position: absolute;
+    left: 60px;
+    height: 70px;
+    color: #232323;
+    line-height: 70px; /* set to same value of height to align vertically center */
+    font-size: 18px;
+    /* text-shadow: 0px 0px 20px lightgrey;  shadow offset is 0, 0, range of shadow blur is 15 */
+}
+
+.header_email {
+    /*border: 1px solid #73AD21;*/
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 989; /* large z-index = forefront */
+    height: 30px; /* height of anchor */
+    color: #434353;
+    cursor: pointer;
+}
+
+
+
+/*******************************************************************************
+* contents
+*******************************************************************************/
+#outer_space {
+    /*border: 3px solid blue;*/
+    /*position: absolute;
+    width: 100%;
+    top: 60px;
+    bottom: 0px;*/
+    height: calc(100% - 70px);
+    width: 100%;
+    overflow: hidden;
+}
+
+#inner_space {
+    /*border: 3px solid red;*/
+    /*position: absolute;
+    width: 100%;
+    top: 60px;
+    bottom: 0px;*/
+    /*height: calc(100% - 60px);*/
+    width: 100%;
+    height: 100%;
+    padding: 0px 20px 20px 0px;
+    overflow: scroll;
+}
+
+#contents_space {
+    /*border: 1px solid #f00;*/
+    height: calc(100% - 70px);
+    width: 700px;
+    margin: auto;
+}
+
+#input_space {
+    /*border: 1px solid blue;*/
+    /*float: left;
+    width: 500px;
+    height: 100%;
+    background-color: lightgrey;*/
+    text-align: center;
+}
+
+#output_space {
+    /*border: 1px solid purple;*/
+}
+
+#prob_space, #reaction_space, #measurement_space {
+    /*border: 1px solid purple;*/
+}
+
+.eq_eq {
+    /*border: 3px solid blue;*/
+    padding-left: 50px;
+}
+
+.item {
+    /*border: 1px solid magenta;*/
+    height: 50px;
+    border-radius: 25px;
+    box-shadow: #ccc 3px 3px 10px -1px;
+    text-align: center;
+    margin: 40px 0px 40px 0px;
+    line-height: 50px; /* set to same value of height to align vertically center */
+}
+.item a {
+    /*border: 1px solid magenta;*/
+    color: #888;
+}
+.item a:hover {
+    /*border: 1px solid magenta;*/
+    color: #ff6f6f;
+}
+
+/*******************************************************************************
+* input length, magnitude, ...
+*******************************************************************************/
+
+#div_input_outer {
+    /*border: 1px solid magenta;*/
+    background-color: rgb(255,255,255); /* fallback color; ?? whit is fallback color */
+    background-color: rgba(255,255,255,0.8); /* opacity */
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    left: 0px;
+    top: 0px;
+}
+
+#div_input_inner {
+    /*border: 1px solid pink;*/
+    position: fixed;
+}
+
+#input_number {
+    margin: 2px;
+    background-color: #f0f0f0;
+    width: 200px;
+    height: 30px;
+    padding-left: 6px;
+}
+
+#submit_number {
+    /*border: 3px solid #73AD21;*/
+    margin: 2px;
+    background-color: grey;
+    width: 100px;
+    height: 30px;
+    color: white;
+    text-align: center;
+}
+#submit_number:hover {
+    background-color: #ff6f6f;
+    cursor: pointer;
+}
+
+#select_load_type {
+    width: 314px;
+    height: 30px;
+}
+
+div.tooltip {
+    position: absolute;
+    text-align: center;
+    width: 140px;
+    height: 28px;
+    padding: 0px;
+    background: #ff6f6f;
+    border: 0px;
+    border-radius: 8px;
+    pointer-events: none;
+    opacity: 0;
+    color: white;
+}
+
+
+
+/*******************************************************************************
+* login and proceed
+*******************************************************************************/
+.inp_txt, .cbx_spt, .cbx_ld {
+    /*border: 3px solid #73AD21;*/
+    margin: 2px;
+    background-color: #f0f0f0;
+    /*font-size: 13px;*/
+    width: 100px;
+    height: 20px;
+    padding-left: 6px;
+}
+.inp_txt {
+    width: 50px;
+    text-align: right;
+    padding-right: 5px;
+}
+
+.smt_solve, .smt_measurement {
+    /*border: 3px solid #73AD21;*/
+    margin: 2px;
+    background-color: grey;
+    /*font-size: 13px;*/
+    width: 220px;
+    height: 50px;
+    color: white;
+}
+.smt_solve:hover, .smt_measurement:hover {
+    background-color: #ff6f6f;
+    cursor: pointer;
+}

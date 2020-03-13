@@ -1,0 +1,117 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <script type="text/javascript" src="../javascripts/jquery-1.10.2.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script type="text/javascript" src="../javascripts/00.svg_basics.js"></script>
+    <script type="text/javascript" src="../javascripts/21.simple_beam.js"></script>
+    <link rel="stylesheet" type="text/css" media="screen" href="../stylesheets/main.css">
+    <link rel="shortcut icon" href="https://ironbell87.github.io/structural_mechanics_II/images/ironbell_icon.png">
+    <title>Reaction of a simple beam</title>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="header_space">
+        <a class="header_logo" href="https://ironbell87.github.io/sms"></a>
+        <a class="header_title">Reaction of a simple beam</a>
+        <a class="header_email" href="mailto:ironbell@kyungnam.ac.kr">by @ironbell</a>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="outer_space">
+        <div id="inner_space">
+            <div id="contents_space">
+                <br />
+                <div id="input_space">
+                    <p style="text-align: left;">1. Simulation setting</p>
+                    <div id="prob_space">
+                        <svg id="prob_svg" width="700px" height="220px">
+                            Sorry, your browser does not support inline SVG.
+                        </svg>
+                    </div>
+                    <!--============== beam ==============<br />
+                    span <input id="span" class="inp_txt" type="number" value="600" placeholder="input beam span" />mm<br />
+                    left support <select id="left_spt" class="cbx_spt">
+                        <option value="hinge" selected>hinge</option>
+                        <option value="roller">roller</option>
+                    </select>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <select id="right_spt" class="cbx_spt">
+                        <option value="hinge">hinge</option>
+                        <option value="roller" selected>roller</option>
+                    </select> right support<br /><br />
+                    ============== load ==============<br />
+                    <select id="ld_type_1" class="cbx_ld">
+                        <option value="point" selected>point</option>
+                        <option value="uniform">uniform</option>
+                    </select>&nbsp;&nbsp;&nbsp;
+                    <div id="ld_set_1" style="display:inline">
+                        <input id="load_1" class="inp_txt" type="number" value="100" placeholder="magnitude" />N&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;from
+                        <input id="loc_fr_1" class="inp_txt" type="number" value="300" placeholder="distance" />mm&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to
+                        <input id="loc_to_1" class="inp_txt" type="number" value="300" placeholder="distance" disabled />mm
+                    </div><br /><br />-->
+                    <!--load 2-->
+                    <!--<select id="ld_type_2" class="cbx_ld">
+                        <option value="no_load" selected>no load</option>
+                        <option value="point">point</option>
+                        <option value="uniform">uniform</option>
+                    </select>
+                    <div id="ld_set_2" style="display:inline;visibility:hidden">
+                        <input id="load_2" class="inp_txt" type="number" placeholder="magnitude" />kN&nbsp;&nbsp;&nbsp;from
+                        <input id="loc_fr_2" class="inp_txt" type="number" placeholder="distance" />m&nbsp;&nbsp;&nbsp;to
+                        <input id="loc_to_2" class="inp_txt" type="number" placeholder="distance" disabled/>m
+                    </div>-->
+                    <!--load 3-->
+                    <!--<select id="ld_type_3" class="cbx_ld">
+                        <option value="no_load" selected>no load</option>
+                        <option value="point">point</option>
+                        <option value="uniform">uniform</option>
+                    </select>
+                    <div id="ld_set_3" style="display:inline;visibility:hidden">
+                        <input id="load_3" class="inp_txt" type="number" placeholder="magnitude" />kN&nbsp;&nbsp;&nbsp;from
+                        <input id="loc_fr_3" class="inp_txt" type="number" placeholder="distance" />m&nbsp;&nbsp;&nbsp;to
+                        <input id="loc_to_3" class="inp_txt" type="number" placeholder="distance" disabled/>m
+                    </div>-->
+                    <input class="smt_solve" type="button" value="Click to solve the problem!" /><br /><br />
+                </div>
+                <div class="separator"></div><br />
+                <div id="output_space" hidden>
+                    <p>2. Free body diagram</p>
+                    <div id="fbd_space">
+                        <svg id="fbd_svg" width="700px" height="220px">
+                            Sorry, your browser does not support inline SVG.
+                        </svg>
+                    </div>
+                    <div class="separator"></div><br />
+                    <p>3. Equilibrium equations</p>
+                    <!--<br />
+                    <p class="eq_eq" id="sigma_fx"></p>
+                    <p class="eq_eq" id="sigma_mz"></p>
+                    <p class="eq_eq" id="sigma_fy"></p>
+                    <br /><br />-->
+                    <div id="reaction_space">
+                        <svg id="reaction_svg" width="700px" height="250px">
+                            Sorry, your browser does not support inline SVG.
+                        </svg>
+                    </div>
+                </div>
+                <div id="div_input_outer" hidden>
+                    <div id="div_input_inner">
+                        <input type="number" id="input_number" placeholder="input number" autofocus />
+                        <input type="submit" id="submit_number" value="submit" /><br />
+                        <select id="select_load_type" hidden>
+                            <option value="point" selected>point</option>
+                            <option value="uniform">uniform</option>
+                        </select>
+                        <span id="span_number" hidden></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
