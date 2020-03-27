@@ -1,16 +1,16 @@
-﻿var g_or = 100; // offset_radius
-var g_bg_sz = [700, 700]; // size of svg for problem
-var g_bg_nsz = [g_bg_sz[0] - gv_ele_unit * 4, g_bg_sz[1] - gv_ele_unit * 4]; // net size of svg for problem
-var g_pendulum_len = 50;
-var g_xy; // 3x2; 3 = left, right, center; 2 = x, y
+﻿const g_or = 100; // offset_radius
+const g_bg_sz = [700, 700]; // size of svg for problem
+const g_bg_nsz = [g_bg_sz[0] - gv_ele_unit * 4, g_bg_sz[1] - gv_ele_unit * 4]; // net size of svg for problem
+const g_pendulum_len = 50;
+let g_xy; // 3x2; 3 = left, right, center; 2 = x, y
 
 $(document).ready(function () {
     // initialize the location of pins (supports)
-    var lpnt = { "x": -g_bg_nsz[0] / 2, "y": +g_bg_nsz[1] / 2 - get_random(0, g_or) }; // left
-    var rpnt = { "x": +g_bg_nsz[0] / 2, "y": +g_bg_nsz[1] / 2 - get_random(0, g_or) }; // right
-    var cpnt = { "x": (lpnt.x + rpnt.x) / 2.0, "y": (lpnt.y + rpnt.y) / 2.0 - get_random(0, g_or) * 3 }; // center
-    var ppnt = { "x": cpnt.x, "y": cpnt.y - g_pendulum_len }; // pendulum
-    g_xy = [{ "start": lpnt, "end": cpnt }, { "start": cpnt, "end": rpnt }, { "start": cpnt, "end": ppnt }]; // left, right, center
+    var lpnt = { x: -g_bg_nsz[0] / 2, y: +g_bg_nsz[1] / 2 - get_random(0, g_or) }; // left
+    var rpnt = { x: +g_bg_nsz[0] / 2, y: +g_bg_nsz[1] / 2 - get_random(0, g_or) }; // right
+    var cpnt = { x: (lpnt.x + rpnt.x) / 2.0, y: (lpnt.y + rpnt.y) / 2.0 - get_random(0, g_or) * 3 }; // center
+    var ppnt = { x: cpnt.x, y: cpnt.y - g_pendulum_len }; // pendulum
+    g_xy = [{ start: lpnt, end: cpnt }, { start: cpnt, end: rpnt }, { start: cpnt, end: ppnt }]; // left, right, center
 
     // initialize svg
     $("svg").empty(); // delete the existing child svgs for all svgs
@@ -73,8 +73,8 @@ function drag_pendulum_ing() {
     new_y = Math.max(new_y, (-g_bg_nsz[1] /2 + gv_ele_unit));
 
     // update points
-    var ppnt = { "x": new_x, "y": new_y };
-    var cpnt = { "x": ppnt.x, "y": ppnt.y + g_pendulum_len };
+    var ppnt = { x: new_x, y: new_y };
+    var cpnt = { x: ppnt.x, y: ppnt.y + g_pendulum_len };
     g_xy[0].end = cpnt;
     g_xy[1].start = cpnt;
     g_xy[2].start = cpnt; g_xy[2].end = ppnt;
@@ -100,16 +100,17 @@ function drag_pendulum_ended() {
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function draw_problem() {
     // prepare temporary points for cable, pin and pendulum
-    var t_xy = [];
-    g_xy.forEach(function (d) {
-        var dx = d.end.x - d.start.x, dy = d.end.y - d.start.y; // vector from start to end
-        var mg = Math.sqrt(dx * dx + dy * dy);
-        var vx = dx / mg, vy = dy / mg; // unit vector of (dx, dy)
-        var ns = { "x": d.start.x + vx / 2, "y": d.start.y + vy / 2 };
-        var ne = { "x": d.end.x - vx / 2, "y": d.end.y - vy / 2 };
-        t_xy.push({ "start": ns, "end": ne })
-    });
-    t_xy = g_xy.concat(t_xy);
+    var t_xy = g_xy.concat(g_xy);
+    //var t_xy = [];
+    //g_xy.forEach(function (d) {
+    //    var dx = d.end.x - d.start.x, dy = d.end.y - d.start.y; // vector from start to end
+    //    var mg = Math.sqrt(dx * dx + dy * dy);
+    //    var vx = dx / mg, vy = dy / mg; // unit vector of (dx, dy)
+    //    var ns = { x: d.start.x + vx / 2, y: d.start.y + vy / 2 };
+    //    var ne = { x: d.end.x - vx / 2, y: d.end.y - vy / 2 };
+    //    t_xy.push({ start: ns, end: ne })
+    //});
+    //t_xy = g_xy.concat(t_xy);
 
     // draw or update cables
     g_structure.selectAll("line")
@@ -117,9 +118,9 @@ function draw_problem() {
         //.enter().append("line").attr("x1", function (d,i) { console.log(i, d.start.x); return d.start.x; }).attr("y1", function (d) { return d.start.y; })
         .attr("x1", d => d.start.x).attr("y1", d => d.start.y) // "d =>" makes d as parameter of each element in g_xy
         .attr("x2", d => d.end.x).attr("y2", d => d.end.y)
-        .attr("style", (d, i) => set_cable_style(i));
+        .attr("style", (d, i) => set_cable_style(i, 3));
 
-    // draw or update pins
+    // draw or update pins and labels
     var j_xy = [g_xy[0].start, g_xy[1].start, g_xy[1].end]; // point
     j_xy[0].name = "A"; j_xy[1].name = "B"; j_xy[2].name = "C"; // label
     g_structure.selectAll("circle")
@@ -134,11 +135,6 @@ function draw_problem() {
 
     // draw or update a pendulum
     draw_pendulum(g_structure, g_xy[2].end.x, g_xy[2].end.y, "100N", true, "pendulum");
-}
-
-function set_cable_style(p_idx) {
-    if (p_idx < 3) return "stroke:dimgrey; stroke-linejoin:round; stroke-linecap:round; stroke-width:" + gv_ele_unit / 2;
-    else return "stroke:lightgrey; stroke-linejoin:round; stroke-linecap:round; stroke-width:" + (gv_ele_unit / 2 - 1);
 }
 
 function measure_angle() {
@@ -168,10 +164,10 @@ function measure_angle() {
     var cable_ang = [+(acosd(ldx / cable_len[0])).toFixed(g_digit), +(acosd(rdx / cable_len[1])).toFixed(g_digit)];
 
     // object for display of measurement using svg; msmt = measurement
-    var msmt = [{ "label": "LENGTH OF AB", "val": cable_len[0], "unit": "mm" },
-                { "label": "LENGTH OF BC", "val": cable_len[1], "unit": "mm" },
-                { "label": "ANGLE OF ABD", "val": cable_ang[0], "unit": "degree" },
-                { "label": "ANGLE OF CBE", "val": cable_ang[1], "unit": "degree" }];
+    var msmt = [{ label: "LENGTH OF AB", val: cable_len[0], unit: "mm" },
+                { label: "LENGTH OF BC", val: cable_len[1], unit: "mm" },
+                { label: "ANGLE OF ABD", val: cable_ang[0], unit: "degree" },
+                { label: "ANGLE OF CBE", val: cable_ang[1], unit: "degree" }];
 
     // draw the results
     g_measurement.selectAll("g").remove();

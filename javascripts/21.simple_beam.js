@@ -313,7 +313,7 @@ function draw_simple_beam(p_svg_mom, p_org_x, p_org_y, p_ang, p_span) {
     draw_roller(p_svg_mom, span, gv_ele_unit / 2, 0);
 
     // dimensions
-    draw_dimensions(p_svg_mom, 0, 0, 0, [p_span], gv_margin_unit * 3, "mm", "dn", true);
+    draw_dimensions(p_svg_mom, 0, 0, 0, "beam_dim", [p_span], gv_margin_unit * 3, "mm", "dn", true);
 }
 
 function draw_simple_beam_fbd(p_svg_mom, p_org_x, p_org_y, p_ang, p_span) {

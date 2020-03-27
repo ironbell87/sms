@@ -263,7 +263,7 @@ function draw_cantilever_beam(p_svg_mom, p_org_x, p_org_y, p_ang, p_span) {
     draw_fix(p_svg_mom, 0, 0, p_ang + 90);
 
     // dimensions
-    draw_dimensions(p_svg_mom, 0, 0, 0, [p_span], gv_margin_unit * 2, "mm", "dn", true);
+    draw_dimensions(p_svg_mom, 0, 0, 0, "beam_dim", [p_span], gv_margin_unit * 2, "mm", "dn", true);
 }
 
 function draw_cantilever_beam_fbd(p_svg_mom, p_org_x, p_org_y, p_ang, p_span) {

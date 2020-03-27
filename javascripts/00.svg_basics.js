@@ -49,7 +49,7 @@ function draw_single_cable_with_points(p_svg_mom, p_sx, p_sy, p_ex, p_ey) {
     p_svg_mom.append("line") // thick line not rectangle; interior
         .attr("x1", p_sx + vx / 2).attr("y1", p_sy + vy / 2)
         .attr("x2", p_ex - vx / 2).attr("y2", p_ey - vy / 2)
-        .attr("style", "stroke:lightgrey; stroke-linejoin:round; stroke-linecap:round; stroke-width:" + (gv_ele_unit / 2 - 1));
+        .attr("style", "stroke:lightgrey; stroke-linejoin:round; stroke-linecap:round; stroke-width:" + (gv_ele_unit / 2));
 }
 
 function draw_pendulum(p_svg_mom, p_x, p_y, p_load, p_drag, p_id) {
@@ -215,15 +215,15 @@ function draw_point_load(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_unit, p_u
     // draw force
     var pnt_frc = p_svg_mom.append("g") // set group for arrow
         .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")"); // translate and then rotate
-    pnt_frc.append("polygon") // triangle
-        //.attr("transform", "translate(0," + up_dn_offset + ")")
-        .attr("points", tri_str)
-        .attr("style", "fill:dimgrey; stroke-width:1; stroke:dimgrey");
     pnt_frc.append("line") // line
         //.attr("transform", "translate(0," + up_dn_offset + ")")
         .attr("x1", 0).attr("y1", 0)
         .attr("x2", 0).attr("y2", -v_load)
         .attr("style", "stroke-width:1; stroke:dimgrey");
+    pnt_frc.append("polygon") // triangle
+        //.attr("transform", "translate(0," + up_dn_offset + ")")
+        .attr("points", tri_str)
+        .attr("style", "fill:dimgrey; stroke-width:1; stroke:dimgrey");
 
     // write magnitude of load
     if (p_unit != undefined) { // do not write magnitude for distributed load
@@ -231,7 +231,7 @@ function draw_point_load(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_unit, p_u
             .attr("transform", "translate(0, " + text_y + ") rotate(" + -p_ang + ")") // translate and then rotate the object and axes
             .attr("x", 0).attr("y", 0)
             .text(v_label)
-            .attr("style", "fill:grey; text-anchor:middle")
+            .attr("style", "cursor:default; fill:grey; text-anchor:middle")
             .attr("id", "load_magnitude");
 
         // click on load magnitude to change the magnitude
@@ -269,6 +269,10 @@ function draw_point_moment(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_dir, p_
     // draw force
     var pnt_frc = p_svg_mom.append("g") // set group for arrow
         .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")"); // translate and then rotate
+    pnt_frc.append("path") // arc
+        //.attr("d", "M0,-20 A20,20 0 0,1 0,20")
+        .attr("d", "M0," + -mnt_rad + " A" + mnt_rad + "," + mnt_rad + " 0 0,1 0," + mnt_rad)
+        .attr("style", "fill:none; stroke-width:1; stroke:dimgrey");
     var arrow = pnt_frc.append("polygon") // arrow
         .attr("points", tri_str)
         .attr("style", "fill:dimgrey; stroke-width:1; stroke:dimgrey");
@@ -278,17 +282,13 @@ function draw_point_moment(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_dir, p_
     else {
         arrow.attr("transform", "translate(" + -tri_h + "," + mnt_rad + ") rotate(90)") // translate and then rotate
     }
-    pnt_frc.append("path") // arc
-        //.attr("d", "M0,-20 A20,20 0 0,1 0,20")
-        .attr("d", "M0," + -mnt_rad + " A" + mnt_rad + "," + mnt_rad + " 0 0,1 0," + mnt_rad)
-        .attr("style", "fill:none; stroke-width:1; stroke:dimgrey");
 
     // write magnitude
     if (p_unit_label != undefined) {
         var m_svg_mom = pnt_frc.append("text") // magnitude
             .attr("x", 0).attr("y", -mnt_rad - 4)
             .text(v_label)
-            .attr("style", "fill:grey; text-anchor:middle");
+            .attr("style", "cursor:default; fill:grey; text-anchor:middle");
         if (p_sub != undefined) {
             draw_sup_sub(m_svg_mom, undefined, p_sub);
         }
@@ -326,7 +326,7 @@ function draw_unifrom_load(p_svg_mom, p_org_x, p_org_y, p_ang, p_width, p_load, 
         var m_svg_mom = ufm_frc.append("text") // magnitude
             .attr("x", p_width / 2).attr("y", -v_load - 4) // 6 (of triangle height) + 4 (margin)
             .text(v_label)
-            .attr("style", "fill:grey; text-anchor:middle")
+            .attr("style", "cursor:default; fill:grey; text-anchor:middle")
             .attr("id", "load_magnitude");
 
         // click on load magnitude to change the magnitude
@@ -354,7 +354,7 @@ function draw_beam_loads(p_svg_mom, p_idx, p_draw_dim, p_drag) {
     if (g_load_type == "point") {
         draw_point_load(p_svg_mom, v_loc_fr, 0 - gv_ele_unit / 2, 0, g_load, "N", "dn", p_drag, "pnt_load"); // dn = downward load
         if (p_draw_dim == false) return;
-        draw_dimensions(p_svg_mom, 0, 0, 0, [g_loc_fr, (g_span - g_loc_fr)], gv_margin_unit * 5, "mm", "dn");
+        draw_dimensions(p_svg_mom, 0, 0, 0, "load_dim", [g_loc_fr, (g_span - g_loc_fr)], gv_margin_unit * 5, "mm", "dn");
     }
     else if (g_load_type == "uniform") {
         draw_unifrom_load(p_svg_mom, v_loc_fr, 0 - gv_ele_unit / 2, 0, v_loc_to - v_loc_fr, g_load, "N/mm", p_drag, "ufm_load"); // true = make load draggable
@@ -362,7 +362,7 @@ function draw_beam_loads(p_svg_mom, p_idx, p_draw_dim, p_drag) {
         var dims = [g_loc_to - g_loc_fr];
         if (Math.abs(g_loc_fr) > 1.0e-3) dims.splice(0, 0, g_loc_fr);
         if (Math.abs(g_loc_to - g_span) > 1.0e-3) dims.push(g_span - g_loc_to);
-        draw_dimensions(p_svg_mom, 0, 0, 0, dims, gv_margin_unit * 5, "mm", "dn");
+        draw_dimensions(p_svg_mom, 0, 0, 0, "load_dim", dims, gv_margin_unit * 5, "mm", "dn");
     }
 }
 
@@ -439,50 +439,49 @@ function draw_reaction_moment(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_dir,
         .attr("transform", "rotate(" + -p_ang + ")") // translate and then rotate the object and axes
         .attr("x", 0).attr("y", -mnt_rad - gv_ele_unit)
         .text(v_label)
-        .attr("style", "fill:grey; text-anchor:middle");
+        .attr("style", "cursor:default; fill:grey; text-anchor:middle");
     if (p_sub != undefined) {
         draw_sup_sub(m_svg_mom, undefined, p_sub);
     }
 }
 
-function draw_dimensions(p_svg_mom, p_org_x, p_org_y, p_ang, p_dims, p_margin, p_unit, p_up_dn, p_click) {
+function draw_dimensions(p_svg_mom, p_org_x, p_org_y, p_ang, p_id, p_dims, p_margin, p_unit, p_up_dn, p_click) {
     // prepare data
-    var v_dims = [p_dims[0] * gv_ratio_len];
-    var sx = [0], ex = [v_dims[0]];
-    for (var i = 1; i < p_dims.length; i++) {
-        v_dims.push(p_dims[i] * gv_ratio_len);
-        sx.push(sx[i - 1] + v_dims[i - 1]);
-        ex.push(ex[i - 1] + v_dims[i]);
-    }
+    var dots = [0], lbls = [];
+    p_dims.forEach(function (d, i) {
+        dots.push(dots[i] + p_dims[i] * gv_ratio_len);
+        lbls.push({ loc: (dots[i] + p_dims[i] * gv_ratio_len / 2), label: p_dims[i].toFixed(g_digit) + p_unit });
+    });
+    var lns = [{ s: 0, e: dots[dots.length - 1] }];
 
     // text location in y
     var text_y = p_margin + 14; // font-size=10, spacing = 4
     if (p_up_dn == "up") text_y = p_margin - 4;
 
     // dimensions
-    var dim = p_svg_mom.append("g") // set group
+    var d3_dim = p_svg_mom.selectAll("#" + p_id).data([1]).join("g") // set group
+        .attr("id", p_id)
         .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")"); // translate and then rotate
-    dim.append("circle") // dots at start point
-        .attr("cx", 0).attr("cy", p_margin).attr("r", 3)
+    d3_dim.selectAll("circle").data(dots).join("circle")
+        .attr("cx", dot => dot).attr("cy", p_margin).attr("r", 3)
         .attr("style", "fill:grey; stroke-width:1; stroke:none");
-    var dims = dim.selectAll("g").data(p_dims).enter();
-    dims.append("line") // dimension line
-        .attr("x1", function (d, i) { return sx[i]; }).attr("y1", p_margin)
-        .attr("x2", function (d, i) { return ex[i]; }).attr("y2", p_margin)
+    d3_dim.selectAll("line").data(lns).join("line") // dimension line
+        .attr("x1", ln => ln.s).attr("y1", p_margin)
+        .attr("x2", ln => ln.e).attr("y2", p_margin)
         .attr("style", "stroke:grey; stroke-width:1");
-    dims.append("circle") // dots at end points
-        .attr("cx", function (d, i) { return ex[i]; }).attr("cy", p_margin).attr("r", 3)
-        .attr("style", "fill:grey; stroke-width:1; stroke:none");
-    dims.append("text") // dimensions
-        .attr("x", function (d, i) { return (sx[i] + ex[i]) / 2; }).attr("y", text_y)
-        .text(function (d, i) { return Math.round(p_dims[i] * 10) / 10 + p_unit; }) // p_dims = dims for texting
+    d3_dim.selectAll("text").data(lbls).join("text") // label
+        .attr("x", lbl => lbl.loc).attr("y", text_y)
+        .text(lbl => lbl.label)
         .attr("style", "cursor:default; fill:grey; text-anchor:middle")
         .attr("id", "span_length");
 
+    // click for change of size
     if (p_click == true) {
-        dims.select("text").on("click", click_span)
+        d3_dim.select("text").on("click", click_span)
             .attr("style", "cursor: pointer; fill:#ff6f6f; text-anchor:middle; text-shadow:0px 0px 5px grey");
     }
+
+    return d3_dim;
 }
 
 //function draw_arrow(p_svg_mom, p_org_x, p_org_y, p_ang, p_magnitude, p_drag) {
@@ -558,6 +557,11 @@ function draw_sup_sub(p_svg_mom, p_sup, p_sub) {
     }
 }
 
+function set_cable_style(p_idx, p_ref_idx) {
+    if (p_idx < p_ref_idx) return "stroke:dimgrey; stroke-linejoin:round; stroke-linecap:round; stroke-width:" + gv_ele_unit / 4;
+    else return "stroke:lightgrey; stroke-linejoin:round; stroke-linecap:round; stroke-width:" + (gv_ele_unit / 4 - 1);
+}
+
 function get_transformation(transform) {
     // get the values of translation, rotation, ...
     // replacement of d3.transform in D3.js v3 which is removed in D3.js v4
@@ -598,17 +602,39 @@ function round_by_unit(p_number, p_round_unt) { // round to [0 1 2 3 ...]*p_roun
     return Math.round(p_number / p_round_unt) * p_round_unt;
 }
 
-function get_random(p_min, p_max) {
+//function get_random(p_min, p_max) {
+//    // for input error
+//    m_min = Math.min(p_min, p_max);
+//    m_max = Math.max(p_min, p_max);
+//    if (m_min == m_max) return 0.0;
+
+//    // return randomm number
+//    if (m_min == undefined)
+//        return Math.random(); // bewteen 0.0 ~ 1.0
+//    else
+//        return Math.random() * (m_max - m_min) + m_min; // between p_min ~ p_max
+//}
+
+function get_random(p_min, p_max, p_num) {
     // for input error
-    m_min = Math.min(p_min);
-    m_max = Math.max(p_max);
+    m_min = Math.min(p_min, p_max);
+    m_max = Math.max(p_min, p_max);
     if (m_min == m_max) return 0.0;
+    if (p_num == undefined) p_num = 1;
 
     // return randomm number
     if (m_min == undefined)
-        return Math.random(); // bewteen 0.0 ~ 1.0
+        if (p_num == 1) return Math.random(); // bewteen 0.0 ~ 1.0
+        else return Array.from({ length: p_num }, () => Math.random()); // p_num random numbers bewteen 0.0 ~ 1.0
     else
-        return Math.random() * (m_max - m_min) + m_min; // between p_min ~ p_max
+        if (p_num == 1) return Math.random() * (m_max - m_min) + m_min; // between p_min ~ p_max
+        else return Array.from({ length: p_num }, () => Math.random() * (m_max - m_min) + m_min); // p_num random numbers bewteen p_min ~ p_max
+        //var myarr = Array.from({ length: p_num }, () => Math.floor(Math.random() * p_num)); // p_num random integers bewteen 0 ~ p_num
+}
+
+function get_randomi(p_max) { // 0, 1, 2, ..., p_max
+    if (p_max == undefined) p_max = 1; // 0, 1
+    return Math.floor(Math.random() * (p_max + 1));
 }
 
 function acosd(p_cos_value) {
