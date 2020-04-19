@@ -4,17 +4,17 @@ var gv_pre_x, gv_pre_y, gv_pre_load_width; // for dragging
 
 $(document).ready(function () {
     // check input value, initializing, get input data, draw simple beam, loads
-    draw_problem();
+    draw_simple_beam_problem();
 
     $(".smt_solve").click(function () {
         // if already solved, then no input is modified
         if ($(".smt_solve").val() == "The problem is solved!") return;
 
         // draw FBD
-        draw_FBD();
+        draw_simple_beam_FBD();
 
         // solve
-        solve_probelm();
+        solve_simple_beam_problem();
 
         //draw_point_load(g_simple_beam, 0, 0 - g_sec_h / 2, 0, 2 * g_sec_h, "kN");
         //draw_point_moment(g_simple_beam, g_span / 2, 0, 90, 100, "ccw", "kN-m");
@@ -102,7 +102,7 @@ $(document).ready(function () {
         // update problem (svg) and UI
         $("#div_input_outer").fadeOut();
         if (is_changed) {
-            draw_problem();
+            draw_simple_beam_problem();
             $("#output_space").fadeOut(); // 1sec.
             $(".smt_solve").val("Click to solve the problem!");
         }
@@ -224,7 +224,7 @@ function drag_load_ended() {
     g_tooltip = undefined;
 
     // redraw problem
-    draw_problem();
+    draw_simple_beam_problem();
 
     // update UI
     $("#output_space").fadeOut();
@@ -417,16 +417,16 @@ function draw_2c_1b_simple_frame(p_svg_mom, p_org_x, p_org_y, p_ang, p_len, p_hg
     }
 }*/
 
-function draw_problem() {
+function draw_simple_beam_problem() {
     //// check input value
     //if (check_input_value(1) == false) return;
     // prepare variable for drawing
     gv_ratio_len = gv_span / g_span;
     gv_ratio_load = gv_load / g_load;
-    console.log(gv_ratio_len);
+
     // initialize svg
-    $("svg").empty(); // delete the existing child svgs for all svgs
-    append_hatching_pattern(); // prepare hatching pattern
+    $("#prob_svg, #fbd_svg, #reaction_svg").empty();
+    append_hatching_pattern("#prob_svg"); // prepare hatching pattern
 
     // draw simple beam and loads
     var sx = 100, sy = 100, ang = 0;
@@ -435,7 +435,7 @@ function draw_problem() {
     draw_beam_loads(g_structure, 1, true, true); // 1 = the 1st load, true = draw dimension, true = make load draggable
 }
 
-function draw_FBD() {
+function draw_simple_beam_FBD() {
     // draw free body diagram
     var sx = 100, sy = 100, ang = 0;
     var g_fbd = d3.select("#fbd_svg").append("g"); // set svg group
@@ -443,7 +443,7 @@ function draw_FBD() {
     draw_beam_loads(g_fbd, 1, true); // 1 = the 1st load, true = draw dimension
 }
 
-function solve_probelm() {
+function solve_simple_beam_problem() {
     // get magnitude of load and location
     var load = g_load, dist = g_loc_fr;
     if (g_load_type == "uniform") {

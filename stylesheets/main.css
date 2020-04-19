@@ -45,6 +45,11 @@ a {
     -ms-transition: text-shadow 0.5s ease;
 }
 
+sup {
+    vertical-align: super;
+    font-size: smaller;
+}
+
 .separator {
     left: 0px;
     right: 0px;
@@ -58,7 +63,6 @@ a {
 /*******************************************************************************
 * header and project title
 *******************************************************************************/
-
 .header_space {
     /*border: 3px solid #73AD21;*/
     background-color: white;
@@ -98,8 +102,17 @@ a {
     /*border: 1px solid #73AD21;*/
     position: absolute;
     top: 20px;
+    right: 190px;
+    height: 30px; /* height of anchor */
+    color: #434353;
+    cursor: pointer;
+}
+
+.header_other {
+    /*border: 1px solid #73AD21;*/
+    position: absolute;
+    top: 20px;
     right: 20px;
-    z-index: 989; /* large z-index = forefront */
     height: 30px; /* height of anchor */
     color: #434353;
     cursor: pointer;
@@ -181,10 +194,11 @@ a {
     color: #ff6f6f;
 }
 
+
+
 /*******************************************************************************
 * input length, magnitude, ...
 *******************************************************************************/
-
 #div_input_outer {
     /*border: 1px solid magenta;*/
     background-color: rgb(255,255,255); /* fallback color; ?? whit is fallback color */
@@ -274,4 +288,86 @@ div.tooltip {
 .smt_solve:hover, .smt_measurement:hover {
     background-color: #ff6f6f;
     cursor: pointer;
+}
+
+
+
+/*******************************************************************************
+* range slider stuff
+*******************************************************************************/
+#setting_space {
+    /*border: 3px solid #73AD21;*/
+    float: left;
+    width: 350px;
+    height: 350px;
+    padding: 20px 0px 0px 50px;
+}
+
+#section_space {
+    /*border: 3px solid #73AD21;*/
+    float: right;
+    width: 300px;
+    height: 350px;
+    padding: 20px 0px 0px;
+}
+
+input[type=range],
+input[type=range]:hover,
+input[type=range]:focus {
+    box-sizing: inherit;
+    display: block;
+    font-size: 1rem;
+    color: inherit;
+    transition: border .2s ease;
+    outline: none;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 5px;
+    margin: 10px 0 25px 0;
+    padding: 0 0;
+    border: 1px solid transparent;
+    border-radius: 5px;
+    background-color: #ffc785;
+    background: linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.4)), linear-gradient(to right, #40e0d0, #ff8c00, #ff0080) -5px center/110%;
+}
+
+input[type=range]::-moz-range-track {
+    background-color: transparent
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    background: white;
+    opacity: 1;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    box-sizing: border-box;
+    margin-top: -1px;
+    box-shadow: 0px 1px 4px 1px rgba(0, 0, 0, 0.2);
+}
+
+input[type=range]::-moz-range-thumb {
+    background: #FFF;
+    opacity: 1;
+    width: 20px;
+    height: 20px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-sizing: border-box;
+    margin-top: -1px;
+    box-shadow: 0px 1px 4px 1px rgba(0, 0, 0, 0.2);
+}
+
+input[type=range]::-moz-focus-outer {
+    border: 0
+}
+
+label {
+    /*border: 3px solid #73AD21;*/
+    float: left;
+    text-align: left;
 }

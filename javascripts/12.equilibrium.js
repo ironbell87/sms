@@ -1,4 +1,4 @@
-﻿// wgt = weight = pendulum, mbl = mobile, ub = unbalanced, mnt = moment, hg = hanger
+﻿// wgt = weight = pendulum, mbl = mobile, hg = hanger
 const g_bg_sz = [700, 470]; // size of svg for problem
 const g_wgt_min = 10, g_wgt_max = 200;
 const g_bar_len = 210, g_bar_hgt = 10, g_hg_hgt = 50, g_long_hg_hgt = g_hg_hgt * 3;
@@ -11,7 +11,7 @@ let plus_bar_color = d3.scaleLinear().domain([0, 1]).range(["White", "RoyalBlue"
 $(document).ready(function () {
     // initialize svg
     gv_ratio_len = 1.0;
-    $("svg").empty(); // delete the existing child svgs for all svgs
+    $("#prob_svg").empty();
     var sx = g_bg_sz[0] / 2, sy = g_bg_sz[1];
     g_structure = d3.select("#prob_svg").attr("style", "width:" + g_bg_sz[0] + "; height:" + g_bg_sz[1]).append("g") // set svg group
         .attr("transform", "translate(0, " + sy + ") scale(1,-1)"); // translate and then flip down the object and axes (+x = right, +y = upward)
@@ -33,7 +33,7 @@ $(document).ready(function () {
     var lv2_rgt_id = create_mbl(4, 0, 0, g_long_hg_hgt); // right child
     hang_mbl(lv1_rgt_id, lv2_rgt_id, get_randomi(2)); // hang chd_id to 4th wgt
 
-    // draw cables, pins and pendulum
+    // draw cables, g_pins and pendulum
     draw_mbl(g_structure, g_mbl_map.get(1000)); // draw from mom(1000) mbl to children, grand children, ...
 
     $(".smt_measurement").click(function () {
@@ -183,8 +183,8 @@ function drag_wgt_hg_ing() {
     var dy = d3.event.y - g_py; // not equal to d3.event.dy => do not know why
 
     // get wgt group and update position
-    var cur_wgt = d3.select(this.parentNode).datum(); // datum() returns the first linked data, i.e., the current wgt
-    //if ((wgt.dist == 0.0) || (wgt.dist == g_bar_len)) return;
+    //var cur_wgt = d3.select(this.parentNode).datum(); // datum() returns the first linked data, i.e., the current wgt
+    var cur_wgt = g_wgt_map.get(d3.select(this.parentNode).datum()); // datum() returns the first linked data, i.e., id of current wgt
 
     // update position
     var tx = cur_wgt.dist + dx;
@@ -197,12 +197,13 @@ function drag_wgt_hg_ing() {
     // draw again
     var d3_mom = d3.select(this.parentNode.parentNode); // this(dot) => wgt_unit => bar_wgt
     draw_bar(d3_mom, mom_mbl);
-    draw_wgt_unit(d3_mom, cur_wgt);
+    draw_wgt_unit(d3_mom, cur_wgt.id, cur_wgt.mag, cur_wgt.dist, 0, g_hg_hgt, false, true);
 }
 
-function mouse_enter(p_mag, p_dist) {
-    var tooltip_text = "Force at " + p_dist.toFixed(g_digit) + "mm"
-    if (p_mag != undefined) tooltip_text = p_mag.toFixed(g_digit) + "N at " + p_dist.toFixed(g_digit) + "mm";
+function mouse_enter(p_tgt_type, p_fx, p_fy, p_x, p_y) {
+    var tooltip_text = "Force at " + p_x.toFixed(g_digit) + "mm";
+    //if (p_mag != undefined) tooltip_text = p_mag.toFixed(g_digit) + "N at " + p_dist.toFixed(g_digit) + "mm";
+    if (p_tgt_type == "wgt") tooltip_text = p_fy.toFixed(g_digit) + "N at " + p_x.toFixed(g_digit) + "mm";
     g_tooltip = d3.select("body").selectAll(".tooltip").data([0]).join("div")
         .classed("tooltip", true)
         .style("left", (d3.event.pageX - 70).toString() + "px")
@@ -230,7 +231,7 @@ function find_wgt_by_mbl_id(p_mom_mbl, p_chd_mbl_id) {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// draw bars, weights, cables, and pins
+// draw bars, weights, cables, and g_pins
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function draw_mbl(p_d3, p_mbl) {
     // group
@@ -272,7 +273,7 @@ function draw_bar_wgt(p_d3, p_mbl) {
     // wgt and mbl
     p_mbl.wgt_ids.forEach(function (wgt_id) {
         var wgt = g_wgt_map.get(wgt_id);
-        if (wgt.mbl_id == 0) draw_wgt_unit(p_d3, wgt);
+        if (wgt.mbl_id == 0) draw_wgt_unit(p_d3, wgt.id, wgt.mag, wgt.dist, 0, g_hg_hgt, false, true);
         else draw_mbl(p_d3, g_mbl_map.get(wgt.mbl_id));
     });
 }
@@ -288,24 +289,24 @@ function draw_bar(p_d3, p_mbl) {
             .on("drag", drag_bar_ing));
 }
 
-function draw_wgt_unit(p_d3, p_wgt) {
-    // group
-    var d3_wgt_unit = p_d3.selectAll("#wgt_unit_" + p_wgt.id).data([p_wgt]).join("g")
-        .attr("id", wgt => "wgt_unit_" + wgt.id)
-        .attr("transform", wgt => "translate(" + wgt.dist + ", 0)");
+//function draw_wgt_unit(p_d3, p_wgt) {
+//    // group
+//    var d3_wgt_unit = p_d3.selectAll("#wgt_unit_" + p_wgt.id).data([p_wgt]).join("g")
+//        .attr("id", wgt => "wgt_unit_" + wgt.id)
+//        .attr("transform", wgt => "translate(" + wgt.dist + ", 0)");
 
-    // wgt hg
-    d3_wgt_unit.each(function () { draw_wgt_hg(d3_wgt_unit, 0, -g_hg_hgt); }); // because wgt hg is downward, -g_hg_hgt
+//    // wgt hg
+//    d3_wgt_unit.each(function () { draw_wgt_hg(d3_wgt_unit, 0, -g_hg_hgt); }); // because wgt hg is downward, -g_hg_hgt
 
-    // wgt
-    d3_wgt_unit.selectAll(".wgt").data(wgt => [[Math.sqrt(wgt.mag), wgt.dist]]).join("rect")
-        .classed("wgt", true)
-        .attr("x", d => -d[0]).attr("y", d => -g_hg_hgt - d[0] * 2)
-        .attr("width", d => d[0] * 2).attr("height", d => d[0] * 2)
-        .attr("style", "fill:lightgrey; stroke:dimgrey")
-            .on("mouseover", function (d) { mouse_enter(Math.pow(d[0], 2), d[1]); })
-            .on("mouseout", function () {mouse_out(); });
-}
+//    // wgt
+//    d3_wgt_unit.selectAll(".wgt").data(wgt => [[Math.sqrt(wgt.mag), wgt.dist]]).join("rect")
+//        .classed("wgt", true)
+//        .attr("x", d => -d[0]).attr("y", d => -g_hg_hgt - d[0] * 2)
+//        .attr("width", d => d[0] * 2).attr("height", d => d[0] * 2)
+//        .attr("style", "fill:lightgrey; stroke:dimgrey")
+//            .on("mouseover", function (d) { mouse_enter(Math.pow(d[0], 2), d[1]); })
+//            .on("mouseout", function () {mouse_out(); });
+//}
 
 function draw_mbl_hg(p_d3, p_x, p_hg_hgt) {
     var mbl = p_d3.datum();
@@ -314,7 +315,7 @@ function draw_mbl_hg(p_d3, p_x, p_hg_hgt) {
         .attr("x1", p_x).attr("y1", 0)
         .attr("x2", p_x).attr("y2", hgt => hgt)
         .attr("style", "stroke:dimgrey; stroke-linejoin:round; stroke-linecap:round; stroke-width: 2")
-            .on("mouseover", function () { mouse_enter(undefined, mbl.ox); })
+            .on("mouseover", function () { mouse_enter("mbl_hg", undefined, undefined, mbl.ox); })
             .on("mouseout", function () { mouse_out(); });
     p_d3.selectAll("#up_hg_dot_" + mbl.id).data([p_hg_hgt]).join("circle") // upper dot of hanger
         .attr("id", "up_hg_dot_" + mbl.id)
@@ -326,27 +327,6 @@ function draw_mbl_hg(p_d3, p_x, p_hg_hgt) {
             .on("drag", drag_mbl_hg_ing));
     p_d3.selectAll("#dn_hg_dot_" + mbl.id).data([p_hg_hgt]).join("circle") // lower dot of hanger
         .attr("id", "dn_hg_dot_" + mbl.id)
-        .attr("cx", p_x).attr("cy", hgt => Math.min(hgt, 0)) // Math.min => -hgt is used for wgt hg, +hgt is used for hg
-        .attr("r", gv_ele_unit / 6)
-        .attr("style", "fill:white; stroke-width:1; stroke:dimgrey");
-}
-
-function draw_wgt_hg(p_d3, p_x, p_hg_hgt) {
-    p_d3.selectAll(".wgt_hg").data([p_hg_hgt]).join("line") // hg for wgt
-        .classed("wgt_hg", true)
-        .attr("x1", p_x).attr("y1", 0)
-        .attr("x2", p_x).attr("y2", hgt => hgt)
-        .attr("style", "stroke:dimgrey; stroke-linejoin:round; stroke-linecap:round; stroke-width: 1");
-    p_d3.selectAll(".up_hg_dot").data([p_hg_hgt]).join("circle") // upper dot of hanger
-        .classed("up_hg_dot", true)
-        .attr("cx", p_x).attr("cy", hgt => Math.max(hgt, 0)) // Math.max => -hgt is used for wgt hg, +hgt is used for hg
-        .attr("r", gv_ele_unit / 6)
-        .attr("style", "cursor: pointer; fill:white; stroke-width:1; stroke:dimgrey")
-        .call(d3.drag()
-            .on("start", drag_started)
-            .on("drag", drag_wgt_hg_ing));
-    p_d3.selectAll(".dn_hg_dot").data([p_hg_hgt]).join("circle") // lower dot of hanger
-        .classed("dn_hg_dot", true)
         .attr("cx", p_x).attr("cy", hgt => Math.min(hgt, 0)) // Math.min => -hgt is used for wgt hg, +hgt is used for hg
         .attr("r", gv_ele_unit / 6)
         .attr("style", "fill:white; stroke-width:1; stroke:dimgrey");

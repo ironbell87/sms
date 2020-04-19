@@ -13,8 +13,8 @@ var g_structure, g_fbd, g_measurement;
 var gv_pre_x, gv_pre_y; // for dragging
 var g_tooltip; // for tooltip
 
-function append_hatching_pattern() {
-    d3.select("svg").append("pattern")
+function append_hatching_pattern(p_id_string) {
+    d3.select(p_id_string).append("pattern")
         .attr("id", "hatch")
         .attr("width", 3).attr("height", 3)
         .attr("patternTransform", "rotate(45 0 0)")
@@ -99,6 +99,58 @@ function draw_pin(p_svg_mom, p_org_x, p_org_y, p_ang) {
         .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")"); // translate and then rotate
     pin.append("circle") // pin
         .attr("cx", 0).attr("cy", 0).attr("r", rad)
+        .attr("style", "fill:white; stroke-width:1; stroke:dimgrey");
+}
+
+function draw_wgt_unit(p_d3, p_id, p_mag, p_x, p_y, p_hgt, p_large_dot, p_drag) {
+    // group
+    var d3_wgt_unit = p_d3.selectAll("#wgt_unit_" + p_id).data([p_id]).join("g")
+        .classed("wgt_unit", true).attr("id", "wgt_unit_" + p_id)
+        .attr("transform", "translate(" + p_x + ", " + p_y + ")");
+
+    // wgt hg
+    d3_wgt_unit.each(function () { draw_wgt_hg(d3_wgt_unit, p_x, -p_hgt, p_large_dot, p_drag, p_y); }); // because wgt hg is downward, -g_hg_hgt
+
+    // wgt
+    var wgt_sz = Math.sqrt(p_mag);
+    d3_wgt_unit.selectAll(".wgt").data([[p_x]]).join("rect")
+        .classed("wgt", true)
+        .attr("x", -wgt_sz).attr("y", -g_hg_hgt - wgt_sz * 2)
+        .attr("width", wgt_sz * 2).attr("height", wgt_sz * 2)
+        .attr("style", "fill:lightgrey; stroke:dimgrey")
+        .on("mouseover", function () { mouse_enter("wgt", undefined, p_mag, p_x); })
+        .on("mouseout", function () { mouse_out(); });
+}
+
+function draw_wgt_hg(p_d3, p_x, p_hg_hgt, p_large_dot, p_drag, p_y) {
+    var dot_radius = gv_ele_unit / 6;
+    if (p_large_dot == true) dot_radius *= 2;
+    p_d3.selectAll(".wgt_hg").data([p_hg_hgt]).join("line") // hg for wgt
+        .classed("wgt_hg", true)
+        .attr("x1", 0).attr("y1", 0)
+        .attr("x2", 0).attr("y2", hgt => hgt)
+        .attr("style", "stroke:dimgrey; stroke-linejoin:round; stroke-linecap:round; stroke-width: 1");
+    var d3_up_dot = p_d3.selectAll(".up_hg_dot").data([p_hg_hgt]).join("circle") // upper dot of hanger
+        .classed("up_hg_dot", true)
+        .attr("cx", 0).attr("cy", hgt => Math.max(hgt, 0)) // Math.max => -hgt is used for wgt hg, +hgt is used for hg
+        .attr("r", dot_radius)
+        .attr("style", "fill:white; stroke-width:1; stroke:dimgrey");
+
+    if (p_large_dot == true) {
+        d3_up_dot.on("mouseover", function () { mouse_enter("dot", undefined, undefined, p_x, p_y); })
+            .on("mouseout", function () { mouse_out(); });
+    }
+
+    if (p_drag == true) {
+        d3_up_dot.attr("style", "cursor: pointer; fill:white; stroke-width:1; stroke:dimgrey")
+            .call(d3.drag()
+            .on("start", drag_started)
+            .on("drag", drag_wgt_hg_ing));
+    }
+    p_d3.selectAll(".dn_hg_dot").data([p_hg_hgt]).join("circle") // lower dot of hanger
+        .classed("dn_hg_dot", true)
+        .attr("cx", 0).attr("cy", hgt => Math.min(hgt, 0)) // Math.min => -hgt is used for wgt hg, +hgt is used for hg
+        .attr("r", gv_ele_unit / 6)
         .attr("style", "fill:white; stroke-width:1; stroke:dimgrey");
 }
 
@@ -598,6 +650,32 @@ function get_transformation(transform) {
     };
 }
 
+function last_of(p_arr) {
+    return p_arr[p_arr.length - 1];
+}
+
+function poly_val(p_coeffs, p_xx) {
+    var num_order = p_coeffs.length - 1;
+    var val = 0;
+    p_coeffs.forEach(function (coeff, j) {
+        val += coeff * Math.pow(p_xx, num_order - j);
+    });
+    return val;
+}
+
+function poly_vals(p_coeffs, p_xxs) {
+    var num_order = p_coeffs.length - 1;
+    var vals = [];
+    p_xxs.forEach(function (xx, i) {
+        var val = 0;
+        p_coeffs.forEach(function (coeff, j) {
+            val += coeff * Math.pow(xx, num_order - j);
+        });
+        vals.push(val);
+    });
+    return vals;
+}
+
 function round_by_unit(p_number, p_round_unt) { // round to [0 1 2 3 ...]*p_round_unt; ex. (12, 5) => 10, (13, 5) => 15
     return Math.round(p_number / p_round_unt) * p_round_unt;
 }
@@ -641,6 +719,9 @@ function acosd(p_cos_value) {
     return Math.acos(p_cos_value) * (180 / Math.PI); // radian => degree
 }
 
+function atand(p_tan_value) {
+    return Math.atan(p_tan_value) * (180 / Math.PI); // radian => degree
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////// draw basic elements : members, supports, loads, dimensions

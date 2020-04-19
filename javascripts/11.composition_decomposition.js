@@ -5,7 +5,7 @@ const g_pendulum_len = 50;
 let g_xy; // 3x2; 3 = left, right, center; 2 = x, y
 
 $(document).ready(function () {
-    // initialize the location of pins (supports)
+    // initialize the location of g_pins (supports)
     var lpnt = { x: -g_bg_nsz[0] / 2, y: +g_bg_nsz[1] / 2 - get_random(0, g_or) }; // left
     var rpnt = { x: +g_bg_nsz[0] / 2, y: +g_bg_nsz[1] / 2 - get_random(0, g_or) }; // right
     var cpnt = { x: (lpnt.x + rpnt.x) / 2.0, y: (lpnt.y + rpnt.y) / 2.0 - get_random(0, g_or) * 3 }; // center
@@ -13,7 +13,7 @@ $(document).ready(function () {
     g_xy = [{ start: lpnt, end: cpnt }, { start: cpnt, end: rpnt }, { start: cpnt, end: ppnt }]; // left, right, center
 
     // initialize svg
-    $("svg").empty(); // delete the existing child svgs for all svgs
+    $("#prob_svg, #measurement_svg").empty();
     var sx = g_bg_sz[0] / 2, sy = g_bg_sz[1] / 2; // size of svg = (700, 700)
     g_structure = d3.select("#prob_svg").append("g") // set svg group
         .attr("transform", "translate(" + sx + ", " + sy + ") scale(1,-1)"); // translate and then flip down the object and axes (+x = right, +y = upward)
@@ -21,7 +21,7 @@ $(document).ready(function () {
     g_measurement = d3.select("#measurement_svg").append("g") // set svg group
         .attr("transform", "translate(" + sx + ", " + sy + ") scale(1,-1)"); // translate and then flip down the object and axes (+x = right, +y = upward)
 
-    // draw cables, pins and pendulum
+    // draw cables, g_pins and pendulum
     draw_problem();
 
     $(".smt_measurement").click(function () {
@@ -96,7 +96,7 @@ function drag_pendulum_ended() {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// draw cables, pins, and pendulum
+// draw cables, g_pins, and pendulum
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function draw_problem() {
     // prepare temporary points for cable, pin and pendulum
@@ -120,7 +120,7 @@ function draw_problem() {
         .attr("x2", d => d.end.x).attr("y2", d => d.end.y)
         .attr("style", (d, i) => set_cable_style(i, 3));
 
-    // draw or update pins and labels
+    // draw or update g_pins and labels
     var j_xy = [g_xy[0].start, g_xy[1].start, g_xy[1].end]; // point
     j_xy[0].name = "A"; j_xy[1].name = "B"; j_xy[2].name = "C"; // label
     g_structure.selectAll("circle")

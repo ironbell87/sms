@@ -7,17 +7,17 @@
     <script type="text/javascript" src="../javascripts/jquery-1.10.2.js"></script>
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script type="text/javascript" src="../javascripts/00.svg_basics.js"></script>
-    <script type="text/javascript" src="../javascripts/12.equilibrium.js"></script>
+    <script type="text/javascript" src="../javascripts/41.axial.js"></script>
     <link rel="stylesheet" type="text/css" media="screen" href="../stylesheets/main.css">
     <link rel="shortcut icon" href="https://ironbell87.github.io/structural_mechanics_II/images/ironbell_icon.png">
-    <title>Equilibrium equations</title>
+    <title>Axial stress and strain</title>
 </head>
 <body>
 
     <!-- HEADER -->
     <div class="header_space">
         <a class="header_logo" href="https://ironbell87.github.io/sms"></a>
-        <a class="header_title">Equilibrium equations</a>
+        <a class="header_title">Axial stress and strain</a>
         <a class="header_email" href="mailto:ironbell@kyungnam.ac.kr">by @ironbell</a>
         <a class="header_other" href="https://trianglify.io">inspired by Trianglify.io</a>
     </div>
@@ -29,11 +29,18 @@
                 <br />
                 <div id="input_space">
                     <div id="prob_space">
-                        <svg id="prob_svg" width="700px" height="470px">
+                        <label>Material =&nbsp;</label><label id="label_M">Type A</label>
+                        <input id="input_M" type="range" min="0" max="4" step="1" value="0">
+                        <label>Cable length L =&nbsp;</label><label id="label_L">60.00 mm</label>
+                        <input id="input_L" type="range" min="40" max="80" step="1" value="60">
+                        <label>Weight of pendulum P =&nbsp;</label><label id="label_P">500.00 N</label>
+                        <input id="input_P" type="range" min="200" max="800" step="10" value="500">
+                        <label>Sectional area A =&nbsp;</label><label id="label_A">3.00 mm<sup>2</sup></label>
+                        <input id="input_A" type="range" min="1" max="5" step="0.05" value="3">
+                        <svg id="prob_svg" width="700px" height="1000px">
                             Sorry, your browser does not support inline SVG.
                         </svg>
-                    </div>
-                    <br /><input class="smt_measurement" type="button" value="Click to refresh setting again!" /><br /><br />
+                    </div><br /><br />
                 </div>
             </div>
         </div>
