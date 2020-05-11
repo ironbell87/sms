@@ -95,6 +95,7 @@ sup {
     color: #232323;
     line-height: 70px; /* set to same value of height to align vertically center */
     font-size: 18px;
+    cursor: default;
     /* text-shadow: 0px 0px 20px lightgrey;  shadow offset is 0, 0, range of shadow blur is 15 */
 }
 
@@ -182,12 +183,18 @@ sup {
     border-radius: 25px;
     box-shadow: #ccc 3px 3px 10px -1px;
     text-align: center;
-    margin: 40px 0px 40px 0px;
+    margin: 30px 0px 30px 0px;
     line-height: 50px; /* set to same value of height to align vertically center */
+    transition: transform .2s ease, box-shadow .2s ease, background .1s ease;
 }
+.item:hover {
+    transform: scale(1.08);
+}
+
 .item a {
     /*border: 1px solid magenta;*/
     color: #888;
+    transition: color .2s ease;
 }
 .item a:hover {
     /*border: 1px solid magenta;*/
@@ -199,10 +206,29 @@ sup {
 /*******************************************************************************
 * input length, magnitude, ...
 *******************************************************************************/
-#div_input_outer {
-    /*border: 1px solid magenta;*/
-    background-color: rgb(255,255,255); /* fallback color; ?? whit is fallback color */
-    background-color: rgba(255,255,255,0.8); /* opacity */
+.div_setting {
+    float: left;
+    width: 180px;
+    padding-left: 50px;
+    margin: 20px 0 20px 0;
+}
+
+.input_setting {
+    width: 80%;
+    margin: 0 0 15px;
+    padding: 10px 15px;
+    border: 1px solid #e6e6e6;
+    border-radius: 20px;
+    transition: border .2s ease;
+}
+.input_setting:focus {
+    outline: none;
+}
+
+/*#div_input_outer {
+    /*border: 1px solid magenta;
+    background-color: rgb(255,255,255); /* fallback color; ?? whit is fallback color
+    background-color: rgba(255,255,255,0.8); /* opacity
     position: fixed;
     width: 100vw;
     height: 100vh;
@@ -211,7 +237,7 @@ sup {
 }
 
 #div_input_inner {
-    /*border: 1px solid pink;*/
+    /*border: 1px solid pink;
     position: fixed;
 }
 
@@ -224,7 +250,7 @@ sup {
 }
 
 #submit_number {
-    /*border: 3px solid #73AD21;*/
+    /*border: 3px solid #73AD21;
     margin: 2px;
     background-color: grey;
     width: 100px;
@@ -240,8 +266,7 @@ sup {
 #select_load_type {
     width: 314px;
     height: 30px;
-}
-
+}*/
 div.tooltip {
     position: absolute;
     text-align: center;
@@ -259,35 +284,34 @@ div.tooltip {
 
 
 /*******************************************************************************
-* login and proceed
+* submit button
 *******************************************************************************/
-.inp_txt, .cbx_spt, .cbx_ld {
-    /*border: 3px solid #73AD21;*/
-    margin: 2px;
-    background-color: #f0f0f0;
-    /*font-size: 13px;*/
-    width: 100px;
-    height: 20px;
-    padding-left: 6px;
-}
-.inp_txt {
-    width: 50px;
-    text-align: right;
-    padding-right: 5px;
-}
-
-.smt_solve, .smt_measurement {
-    /*border: 3px solid #73AD21;*/
+.smt_measurement {
+    /*border: 3px solid #73AD21;
     margin: 2px;
     background-color: grey;
-    /*font-size: 13px;*/
+    /*font-size: 13px;
     width: 220px;
     height: 50px;
-    color: white;
-}
-.smt_solve:hover, .smt_measurement:hover {
-    background-color: #ff6f6f;
+    color: white;*/
     cursor: pointer;
+    color: #888; /*#47cee4;*/
+    width: 100%;
+    height: 50px;
+    margin: 0 0 15px;
+    padding: 10px 30px;
+    border-radius: 25px;
+    background: #fff;
+    transition: color .2s ease, transform .2s ease, box-shadow .2s ease, background .1s ease;
+    box-shadow: 0 1px 4px 1px rgba(0,0,0,.18);
+}
+.smt_measurement:hover {
+    color: #ff6f6f;
+    transform: scale(1.08);
+    box-shadow: 1px 2px 6px 2px rgba(0, 0, 0, 0.1);
+}
+.smt_measurement:focus {
+    outline: none;
 }
 
 
@@ -295,10 +319,10 @@ div.tooltip {
 /*******************************************************************************
 * range slider stuff
 *******************************************************************************/
-#setting_space {
+#setting_space, #gauge_sapce {
     /*border: 3px solid #73AD21;*/
     float: left;
-    width: 350px;
+    width: 600px; /* 600px = 100%(700px) - 50px * 2 */
     height: 350px;
     padding: 20px 0px 0px 50px;
 }

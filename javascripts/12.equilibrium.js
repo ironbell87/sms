@@ -213,7 +213,7 @@ function mouse_enter(p_tgt_type, p_fx, p_fy, p_x, p_y) {
         .text(tooltip_text);
     g_tooltip
         .transition().duration(500)
-        .style("opacity", .6);
+        .style("opacity", .8);
 }
 
 function mouse_out() {

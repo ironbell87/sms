@@ -47,7 +47,7 @@ function drag_pendulum_started() {
         .html(g_xy[2].end.x.toFixed(g_digit).toString() + ", " + g_xy[2].end.y.toFixed(g_digit).toString());
     g_tooltip
         .transition().duration(500)
-        .style("opacity", .6);
+        .style("opacity", .8);
 
     // update problem (svg) and UI
     $("#div_input_outer").fadeOut();

@@ -1,38 +1,49 @@
 ﻿// cbl = cable, wgt = weight = pendulum, hg = hanger
-const g_bg_sz = [700, 470]; // size of svg for problem
+const g_bg_sz = [700, 700]; // size of svg for problem
 const g_wgt_min = 10, g_wgt_max = 200;
 const g_hg_hgt = 50;
+let g_wgt_num = 7;
 let g_all_wgt_units = [], g_wgt_units = [], g_pins = [], g_cbls = [];
 let g_nxt_wgt_id = 0, g_nxt_cbl_id = 1000;
 
 $(document).ready(function () {
+    $(document).on("input", "#input_N", function () {
+        g_wgt_num = parseInt($(this).val());
+        $("#label_N").html(g_wgt_num);
+        initialize_svg();
+        create(g_wgt_num + 1);
+        solve();
+        draw();
+    });
+
     // initialize svg
-    gv_ratio_len = 1.0;
+    initialize_svg();
+
+    // create, solve, and draw
+    create(g_wgt_num + 1);
+    solve();
+    draw();
+});
+
+function initialize_svg() {
+    gv_ratio_len = 1.0, g_nxt_wgt_id = 0, g_nxt_cbl_id = 1000;
     $("#prob_svg").empty(); // delete the existing child svgs for all svgs
     var sx = g_bg_sz[0] / 2, sy = g_bg_sz[1];
     g_structure = d3.select("#prob_svg").append("g") // set svg group
         .attr("transform", "translate(" + sx + ", " + sy + ") scale(1,-1)"); // translate and then flip down the object and axes (+x = right, +y = upward)
-
-    // create, solve, and draw
-    create(8);
-    solve();
-    draw();
-
-    $(".smt_measurement").click(function () {
-        location.reload();
-    });
-});
+}
 
 function create(p_interval) {
     // coordinates of left, right pin
     var lx = -g_bg_sz[0] / 2 + gv_ele_unit * 1.5, rx = -lx; // left and right
-    var ty = g_bg_sz[1] - gv_ele_unit * 1.5, by = gv_ele_unit * 5.0; // top and bottom
+    var ty = g_bg_sz[1] - gv_ele_unit * 1.5, by = gv_ele_unit * 20; // top and bottom
     var x0 = get_random(lx / 5, rx / 5), y0 = by; // vertex based on random number
     var x1 = lx, y1 = ty; // the other point
     if (x0 < 0) x1 = rx;
     var a = (y1 - y0) / Math.pow(x1 - x0, 2), b = -2 * a * x0, c = a * x0 * x0 + y0; // the coefficients of quadratic equation based on points of (x0, y0) and (x1, y1)
 
     // create g_wgt_units
+    g_all_wgt_units = []; // empty array
     var scaler = d3.scaleLinear().domain([0, p_interval]).range([lx, rx]); // scale [0, max_interval] to [lx, rx]
     var xs = d3.range(0, p_interval + 1, 1); // 0, 1, 2, ..., max_interval
     var scope = (rx - lx) / p_interval / 4;
@@ -77,6 +88,7 @@ function create(p_interval) {
     g_pins = [g_all_wgt_units[0], g_all_wgt_units[g_all_wgt_units.length - 1]];
 
     //create g_cbls
+    g_cbls = [];
     g_all_wgt_units.forEach(function (wgt_unit, i) {
         if (i != 0) {
             var pre_wgt = g_all_wgt_units[i - 1];
@@ -134,30 +146,6 @@ function draw() {
     });
 }
 
-function create_point(p_x, p_y) {
-    return { x: p_x, y: p_y };
-}
-
-function create_vector(p_s, p_e) {
-    var delta = create_point(p_e.x - p_s.x, p_e.y - p_s.y);
-    var mag = Math.sqrt(delta.x * delta.x + delta.y * delta.y);
-    var unit_vec = create_point(delta.x / mag, delta.y / mag);
-    return {
-        sp: p_s, ep: p_e,
-        df: delta, mg: mag,
-        uv: unit_vec,
-        ng: atand(unit_vec.y / unit_vec.x) // angle
-    };
-
-    //return {
-    //    sp: p_s, ep: p_e,
-    //    df: function () { create_point(this.ep.x - this.sp.x, this.ep.y - this.sp.y) },
-    //    mg: function () { Math.sqrt(this.df().x * this.df().x + this.df().y * this.df().y) },
-    //    uv: function () { create_point(this.df().x / this.mg(), this.df().y / this.mg()) },
-    //    ng: function () { atand(this.uv().y / this.uv().x) } // angle
-    //};
-}
-
 function create_wgt_unit(p_x, p_y, p_is_pin) {
     var wgt = 0;
     if (p_is_pin == false) wgt = -get_random(g_wgt_min, g_wgt_max); // minus means downward
@@ -207,7 +195,7 @@ function mouse_enter(p_tgt_type, p_fx, p_fy, p_x, p_y) {
         .html(tooltip_text);
     g_tooltip
         .transition().duration(500)
-        .style("opacity", .6);
+        .style("opacity", .8);
 }
 
 function mouse_out() {

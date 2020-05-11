@@ -3,99 +3,66 @@ var g_V_a = 100, g_M_a = 30000, g_H = 0;
 var gv_pre_x, gv_pre_y, gv_pre_load_width; // for dragging
 
 $(document).ready(function () {
+    // update setting
+    $("#setting_space").css("height", "170px");
+    $(document).on("input", "#input_T", function () {
+        if (parseInt($(this).val()) == 0) { // point load
+            g_load_type = "point";
+            g_loc_to = g_loc_fr;
+            $("#label_T").html("Point load");
+        }
+        else { // point ==> uniform
+            g_load_type = "uniform";
+            if (g_loc_fr == g_span) g_loc_fr = 0;
+            g_loc_to = g_span;
+            $("#label_T").html("Uniform load");
+        }
+        draw_cantilever_beam_problem();
+        draw_cantilever_beam_FBD();
+        solve_cantilever_beam_problem();
+    });
+    $(document).on("input", "#input_P", function () {
+        g_load = parseFloat($(this).val());
+        $("#label_P").html(g_load.toFixed(g_digit) + " N");
+        draw_cantilever_beam_problem();
+        draw_cantilever_beam_FBD();
+        solve_cantilever_beam_problem();
+    });
+    $(document).on("input", "#input_L", function () {
+        var new_span = parseFloat($(this).val());
+        var ratio = new_span / g_span;
+        g_span = new_span;
+        g_loc_fr = g_loc_fr * ratio; // rounding to 0, 5, 10, ... makes large error
+        g_loc_to = g_loc_to * ratio;
+        $("#label_L").html(g_span.toFixed(g_digit) + " mm");
+        draw_cantilever_beam_problem();
+        draw_cantilever_beam_FBD();
+        solve_cantilever_beam_problem();
+    });
+
     // check input value, initializing, get input data, draw simple beam, loads
     draw_cantilever_beam_problem();
 
-    $(".smt_solve").click(function () {
-        // if already solved, then no input is modified
-        if ($(".smt_solve").val() == "The problem is solved!") return;
+    // draw FBD
+    draw_cantilever_beam_FBD();
 
-        // draw FBD
-        draw_cantilever_beam_FBD();
+    // solve
+    solve_cantilever_beam_problem();
 
-        // solve
-        solve_cantilever_beam_problem();
+    //$(".smt_solve").click(function () {
+    //    // if already solved, then no input is modified
+    //    if ($(".smt_solve").val() == "The problem is solved!") return;
 
-        $("#output_space").fadeIn(); // 1sec.
-        $(".smt_solve").val("The problem is solved!");
-    });
+    //    // draw FBD
+    //    draw_cantilever_beam_FBD();
 
-    $("#submit_number").click(function () {
-        // change or not
-        var is_changed = false;
+    //    // solve
+    //    solve_cantilever_beam_problem();
 
-        // get input value
-        var input_value = parseFloat($("#input_number").val());
-
-        // respond to change
-        switch ($("#span_number").text()) { // get type of input = magnitude of load, span length, ...
-            case "load_magnitude":
-                if (input_value <= 0) { alert("Load must be positive! Solve again!"); return; }
-                if (input_value != g_load) { // no consideration for position of load is needed
-                    g_load = input_value;
-                    is_changed = true;
-                }
-                if (g_load_type != $("#select_load_type option:selected").val()) { // consideration for position of load is needed
-                    g_load_type = $("#select_load_type option:selected").val();
-                    if (g_load_type == "point") { // unifrom ==> point
-                        g_loc_to = g_loc_fr;
-                    }
-                    else { // point ==> uniform
-                        if (g_loc_fr == g_span) g_loc_fr = 0;
-                        g_loc_to = g_span;
-                    }
-                    is_changed = true;
-                }
-                break;
-            case "span_length":
-                if (input_value <= 0) { alert("Span must be positive! Solve again!"); return; }
-                if (input_value != g_span) { // consideration for position of load is needed
-                    var ratio = input_value / g_span;
-                    g_span = input_value;
-                    g_loc_fr = round_by_unit(g_loc_fr * ratio, 5); // round to 0, 5, 10, 15, ...
-                    g_loc_to = round_by_unit(g_loc_to * ratio, 5); // round to 0, 5, 10, 15, ...
-                    is_changed = true;
-                }
-                break;
-            default: break;
-        }
-
-        // update problem (svg) and UI
-        $("#div_input_outer").fadeOut();
-        if (is_changed) {
-            draw_cantilever_beam_problem();
-            $("#output_space").fadeOut(); // 1sec.
-            $(".smt_solve").val("Click to solve the problem!");
-        }
-    });
+    //    $("#output_space").fadeIn(); // 1sec.
+    //    $(".smt_solve").val("The problem is solved!");
+    //});
 });
-
-function click_load() {
-    // get location of input
-    var x = d3.event.x;
-    var y = d3.event.y;
-
-    // update UI
-    $("#input_number").val(g_load);
-    $("#select_load_type").val(g_load_type).show(); // set value and show
-    $("#span_number").text(this.id);
-    $("#div_input_inner").css("left", x.toString() + "px").css("top", y.toString() + "px");
-    $("#div_input_outer").fadeIn();
-    //}
-}
-
-function click_span() {
-    // get location of input
-    var x = d3.event.x;
-    var y = d3.event.y;
-
-    // in case of input button for span
-    $("#input_number").val(g_span);
-    $("#select_load_type").hide(); // only hide
-    $("#span_number").text(this.id);
-    $("#div_input_inner").css("left", x.toString() + "px").css("top", y.toString() + "px");
-    $("#div_input_outer").fadeIn();
-}
 
 function drag_load_started() {
     // set point at start of drag
@@ -112,7 +79,7 @@ function drag_load_started() {
         .html(g_loc_fr.toString() + ", " + g_loc_to.toString());
     g_tooltip
         .transition().duration(500)
-        .style("opacity", .6);
+        .style("opacity", .8);
 }
 
 function drag_load_ing() {
@@ -120,9 +87,7 @@ function drag_load_ing() {
     var svg_load = d3.select(this.parentNode);
 
     // get new x
-    var pre_x = get_transformation(svg_load.attr("transform")).translateX;
-    var pre_y = get_transformation(svg_load.attr("transform")).translateY;
-    var pre_a = get_transformation(svg_load.attr("transform")).rotate;
+    var pre_trans = get_transformation(svg_load.attr("transform"));
     var v_new_x = d3.event.x;
     var v_end_x = g_loc_to * gv_ratio_len;
 
@@ -132,10 +97,10 @@ function drag_load_ing() {
             if (v_new_x < 0) v_new_x = 0;
             if (gv_span < v_new_x) v_new_x = gv_span;
             v_end_x = v_new_x;
-            svg_load.attr("transform", "translate(" + v_new_x + "," + pre_y + ") rotate(" + pre_a + ")"); // update svg of the load
+            svg_load.attr("transform", "translate(" + v_new_x + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
             break;
         case "ufm_load": // coordinate system of parent node is used
-            v_new_x = pre_x + d3.event.dx; // pre_x + delta_x = new_x of point load or start_x of uniform load
+            v_new_x = pre_trans.translateX + d3.event.dx; // pre_x + delta_x = new_x of point load or start_x of uniform load
             if (v_new_x < 0) v_new_x = 0;
             if (gv_span < v_new_x) v_new_x = gv_span;
             v_end_x = v_new_x + ((g_loc_to - g_loc_fr) * gv_ratio_len);
@@ -143,21 +108,21 @@ function drag_load_ing() {
                 v_end_x = gv_span;
                 v_new_x = v_end_x - ((g_loc_to - g_loc_fr) * gv_ratio_len);
             }
-            svg_load.attr("transform", "translate(" + v_new_x + "," + pre_y + ") rotate(" + pre_a + ")"); // update svg of the load
+            svg_load.attr("transform", "translate(" + v_new_x + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
             break;
         case "s_u_load": // coordinate system of parent of ufm_load is used
             v_new_x = d3.event.x; // d3.event.dx + g_loc_fr * gv_ratio_len;
             v_end_x = g_loc_to * gv_ratio_len;
             if (v_new_x < 0) v_new_x = 0;
             if (v_end_x <= v_new_x) v_new_x = v_end_x - 5 * gv_ratio_len; // 5 is the min of delta
-            svg_load.attr("transform", "translate(" + (v_new_x - gv_pre_x) + "," + pre_y + ") rotate(" + pre_a + ")"); // update svg of the load
+            svg_load.attr("transform", "translate(" + (v_new_x - gv_pre_x) + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
             break;
         case "e_u_load": // coordinate system of parent of ufm_load is used
             v_new_x = g_loc_fr * gv_ratio_len;
             v_end_x = d3.event.x; // d3.event.dx + g_loc_to * gv_ratio_len;
             if (gv_span < v_end_x) v_end_x = gv_span;
             if (v_end_x <= v_new_x) v_end_x = v_new_x + 5 * gv_ratio_len; // 5 is the min of delta
-            svg_load.attr("transform", "translate(" + (v_end_x - gv_pre_x + gv_pre_load_width) + "," + pre_y + ") rotate(" + pre_a + ")"); // update svg of the load
+            svg_load.attr("transform", "translate(" + (v_end_x - gv_pre_x + gv_pre_load_width) + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
             break;
     }
 
@@ -176,10 +141,8 @@ function drag_load_ended() {
 
     // redraw problem
     draw_cantilever_beam_problem();
-
-    // update UI
-    $("#output_space").fadeOut();
-    $(".smt_solve").val("Click to solve the problem!");
+    draw_cantilever_beam_FBD();
+    solve_cantilever_beam_problem();
 }
 
 //function check_input_value(p_ld_idx) {
@@ -281,8 +244,6 @@ function draw_cantilever_beam_fbd(p_svg_mom, p_org_x, p_org_y, p_ang, p_span) {
 }
 
 function draw_cantilever_beam_problem() {
-    //// check input value
-    //if (check_input_value(1) == false) return;
     // prepare variable for drawing
     gv_ratio_len = gv_span / g_span;
     gv_ratio_load = gv_load / g_load;
@@ -293,7 +254,7 @@ function draw_cantilever_beam_problem() {
 
     // draw simple beam and loads
     var sx = 100, sy = 100, ang = 0;
-    var g_structure = d3.select("#prob_svg").append("g"); // set svg group
+    g_structure = d3.select("#prob_svg").append("g"); // set svg group
     draw_cantilever_beam(g_structure, sx, sy, ang, g_span);
     draw_beam_loads(g_structure, 1, true, true); // 1 = the 1st load, true = draw dimension, true = make load draggable
 }
@@ -301,7 +262,7 @@ function draw_cantilever_beam_problem() {
 function draw_cantilever_beam_FBD() {
     // draw free body diagram
     var sx = 100, sy = 100, ang = 0;
-    var g_fbd = d3.select("#fbd_svg").append("g"); // set svg group
+    g_fbd = d3.select("#fbd_svg").append("g"); // set svg group
     draw_cantilever_beam_fbd(g_fbd, sx, sy, ang, g_span);
     draw_beam_loads(g_fbd, 1, true); // 1 = the 1st load, true = draw dimension
 }
@@ -326,7 +287,7 @@ function solve_cantilever_beam_problem() {
 
     // draw free body diagram
     var sx = 50, sy = 0, ang = 0;
-    var g_reaction = d3.select("#reaction_svg").append("g") // set svg group
+    g_reaction = d3.select("#reaction_svg").append("g") // set svg group
         .attr("transform", "translate(" + sx + ", " + sy + ") scale(1,-1)"); // translate and then flip down the object and axes (+x = right, +y = upward)
 
     // draw the results
@@ -338,7 +299,7 @@ function solve_cantilever_beam_problem() {
         .html(d => d.label)
         .attr("style", "cursor:default; fill:grey; text-anchor:start") // start/middle/end
         .attr("transform", "scale(1, -1)")
-        .append("tspan").text(d => d.sub).attr("baseline-shift", "sub").attr("font-size", "62%"); // not work!!!
+        .append("tspan").text(d => d.sub).style("baseline-shift", "sub").style("font-size", "0.8em");
     msmt_result_grp.append("rect")
         .attr("x", 50).attr("y", -15)
         .attr("width", 150).attr("height", 40)

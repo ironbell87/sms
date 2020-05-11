@@ -8,8 +8,12 @@ var gv_span = 500, gv_hgt, gv_load = 30;
 var gv_margin_unit = 15, gv_ele_unit = 15;
 var gv_ratio_len, gv_ratio_load;
 
+// variables for trianlge for arrow
+var tri_w = 6, tri_h = 6;
+var tri_str = -tri_w / 2 + "," + -tri_h + " " + tri_w / 2 + "," + -tri_h + " 0,0";
+
 // variables for structure
-var g_structure, g_fbd, g_measurement;
+var g_structure, g_fbd, g_reaction, g_measurement;
 var gv_pre_x, gv_pre_y; // for dragging
 var g_tooltip; // for tooltip
 
@@ -189,8 +193,7 @@ function draw_roller_reactions(p_svg_mom, p_org_x, p_org_y, p_ang, p_node_label,
 
 function draw_hinge(p_svg_mom, p_org_x, p_org_y, p_ang) {
     // variables for loc, size
-    var tri_w = 15, tri_h = gv_ele_unit;
-    var hatch_w = 40, hatch_h = gv_ele_unit, hatch_x = -hatch_w / 2, hatch_y = tri_h;
+    var tri_w = tri_h = gv_ele_unit;
     var tri_str = -tri_w / 2 + "," + tri_h + " " + tri_w / 2 + "," + tri_h + " 0,0";
 
     // draw hinge
@@ -199,7 +202,7 @@ function draw_hinge(p_svg_mom, p_org_x, p_org_y, p_ang) {
     hinge.append("polygon") // triangle
         .attr("points", tri_str)
         .attr("style", "fill:white; stroke-width:1; stroke:dimgrey");
-    draw_fix(hinge, 0, hatch_y, 0); // draw fix
+    draw_fix(hinge, 0, gv_ele_unit, 0); // draw fix
 }
 
 function draw_hinge_reactions(p_svg_mom, p_org_x, p_org_y, p_ang, p_node_label) {
@@ -247,14 +250,9 @@ function draw_hinge_joint(p_svg_mom, p_org_x, p_org_y) {
 
 function draw_point_load(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_unit, p_up_dn, p_drag, p_id) {
     // variables for loc, size
-    var tri_w = 6, tri_h = 6;
-    var tri_str = -tri_w / 2 + "," + -tri_h + " " + tri_w / 2 + "," + -tri_h + " 0,0";
     var v_load = p_load * gv_ratio_load;
-    var v_label = Math.round(p_load * 10) / 10 + p_unit;
-    if (Math.abs(p_load) < 0.01) {
-        v_load = gv_load;
-        v_label = p_unit;
-    }
+    var v_label = (Math.round(p_load * 10) / 10).toFixed(g_digit) + p_unit;
+    if (Math.abs(p_load) < 0.01) { v_load = gv_load; } // in case of no load
 
     // set location along the p_up_dn
     var up_dn_offset = 0, text_y = -v_load - 10;
@@ -285,9 +283,6 @@ function draw_point_load(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_unit, p_u
             .text(v_label)
             .attr("style", "cursor:default; fill:grey; text-anchor:middle")
             .attr("id", "load_magnitude");
-
-        // click on load magnitude to change the magnitude
-        m_svg_mom.on("click", click_load);
     }
 
     // set drag callback function
@@ -304,14 +299,12 @@ function draw_point_load(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_unit, p_u
             .on("end", drag_load_ended))
             .attr("id", p_id);
         pnt_frc.select("line").attr("style", "stroke-width:1; stroke:#ff6f6f");
-        pnt_frc.select("text").attr("style", "cursor: pointer; fill:#ff6f6f; text-anchor:middle; text-shadow:0px 0px 5px grey");
+        //pnt_frc.select("text").attr("style", "cursor: pointer; fill:#ff6f6f; text-anchor:middle; text-shadow:0px 0px 5px grey");
     }
 }
 
 function draw_point_moment(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_dir, p_unit_label, p_sub) {
     // variables for loc, size
-    var tri_w = 6, tri_h = 6;
-    var tri_str = -tri_w / 2 + "," + -tri_h + " " + tri_w / 2 + "," + -tri_h + " 0,0";
     var mnt_rad = 20;
     var v_label = Math.round(p_load * 10) / 10 + p_unit_label;
     if (Math.abs(p_load) < 0.01) {
@@ -350,11 +343,8 @@ function draw_point_moment(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_dir, p_
 function draw_unifrom_load(p_svg_mom, p_org_x, p_org_y, p_ang, p_width, p_load, p_unit, p_drag, p_id) {
     // variables for loc, size
     var v_load = p_load * gv_ratio_load;
-    var v_label = Math.round(p_load * 10) / 10 + p_unit;
-    if (Math.abs(p_load) < 0.01) {
-        v_load = gv_load;
-        v_label = p_unit;
-    }
+    var v_label = (Math.round(p_load * 10) / 10).toFixed(g_digit) + p_unit;
+    if (Math.abs(p_load) < 0.01) { v_load = gv_load; } // in case of no load
 
     // draw bounding rect
     var ufm_frc = p_svg_mom.append("g")
@@ -380,9 +370,6 @@ function draw_unifrom_load(p_svg_mom, p_org_x, p_org_y, p_ang, p_width, p_load, 
             .text(v_label)
             .attr("style", "cursor:default; fill:grey; text-anchor:middle")
             .attr("id", "load_magnitude");
-
-        // click on load magnitude to change the magnitude
-        m_svg_mom.on("click", click_load);
     }
 
     // set drag callback function
@@ -394,7 +381,7 @@ function draw_unifrom_load(p_svg_mom, p_org_x, p_org_y, p_ang, p_width, p_load, 
             //.on("drag", function () { drag_arrow_ing(pnt_frc, p_org_y); }) // different type of function call for passing parameters
             .on("end", drag_load_ended))
             .attr("id", p_id);
-        ufm_frc.select("text").attr("style", "cursor: pointer; fill:#ff6f6f; text-anchor:middle; text-shadow:0px 0px 5px grey");
+        //ufm_frc.select("text").attr("style", "cursor: pointer; fill:#ff6f6f; text-anchor:middle; text-shadow:0px 0px 5px grey");
     }
 }
 
@@ -420,13 +407,9 @@ function draw_beam_loads(p_svg_mom, p_idx, p_draw_dim, p_drag) {
 
 function draw_reaction_force(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_label, p_sub, p_up_dn) {
     // variables for loc, size
-    var tri_w = 6, tri_h = 6;
-    var tri_str = -tri_w / 2 + "," + -tri_h + " " + tri_w / 2 + "," + -tri_h + " 0,0";
     var v_load = p_load * gv_ratio_load;
     var v_label = p_label;
-    if (Math.abs(p_load) < 0.01) {
-        v_load = gv_load;
-    }
+    if (Math.abs(p_load) < 0.01) { v_load = gv_load; }
 
     // set location along the p_up_dn
     var up_dn_offset = 0, text_y = -v_load - gv_ele_unit;
@@ -461,8 +444,6 @@ function draw_reaction_force(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_label
 
 function draw_reaction_moment(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_dir, p_sub) {
     // variables for loc, size
-    var tri_w = 6, tri_h = 6;
-    var tri_str = -tri_w / 2 + "," + -tri_h + " " + tri_w / 2 + "," + -tri_h + " 0,0";
     var mnt_rad = 20;
     var v_label = "M";
     if (Math.abs(p_load) < 0.01) {
@@ -529,8 +510,9 @@ function draw_dimensions(p_svg_mom, p_org_x, p_org_y, p_ang, p_id, p_dims, p_mar
 
     // click for change of size
     if (p_click == true) {
-        d3_dim.select("text").on("click", click_span)
-            .attr("style", "cursor: pointer; fill:#ff6f6f; text-anchor:middle; text-shadow:0px 0px 5px grey");
+        //d3_dim.select("text").on("click", click_span)
+        //    .attr("style", "cursor: pointer; fill:#ff6f6f; text-anchor:middle; text-shadow:0px 0px 5px grey");
+        //d3_dim.select("text").attr("style", "cursor: pointer; fill:#ff6f6f; text-anchor:middle; text-shadow:0px 0px 5px grey");
     }
 
     return d3_dim;
@@ -538,8 +520,6 @@ function draw_dimensions(p_svg_mom, p_org_x, p_org_y, p_ang, p_id, p_dims, p_mar
 
 //function draw_arrow(p_svg_mom, p_org_x, p_org_y, p_ang, p_magnitude, p_drag) {
 //    // downward arrowhead(triangle) at (0,0)
-//    var tri_w = 6, tri_h = 6;
-//    var tri_str = -tri_w / 2 + "," + -tri_h + " " + tri_w / 2 + "," + -tri_h + " 0,0";
 //    p_svg_mom.append("polygon")
 //        .attr("points", tri_str)
 //        .attr("style", "fill:dimgrey;stroke-width:1;stroke:dimgrey");
@@ -598,14 +578,14 @@ function draw_sup_sub(p_svg_mom, p_sup, p_sub) {
     if (p_sup != undefined) { // superscript
         p_svg_mom.append("tspan")
             .text(p_sup)
-            .attr("baseline-shift", "super")
-            .attr("font-size", "62%"); // not work!!!
+            .style("baseline-shift", "super")
+            .style("font-size", "0.8em");
     }
     if (p_sub != undefined) { // subscript
         p_svg_mom.append("tspan")
             .text(p_sub)
-            .attr("baseline-shift", "sub")
-            .attr("font-size", "62%"); // not work!!!
+            .style("baseline-shift", "sub")
+            .style("font-size", "0.8em");
     }
 }
 
@@ -723,6 +703,69 @@ function atand(p_tan_value) {
     return Math.atan(p_tan_value) * (180 / Math.PI); // radian => degree
 }
 
+function get_angle_360(p_pnt) {
+    var v = create_vector(create_point(0, 0), p_pnt);
+    var a = atand(v.uv.y / v.uv.x); // in degree; for the 1st quarter
+    if (v.uv.x < 0) a += 180; // for the 2nd, 3rd quarter
+    if (a < 0) a += 360; // for the 4th quarter
+    return a;
+}
+
+function move_xy(p_pnt, p_x, p_y) {
+    p_pnt.x += p_x;
+    p_pnt.y += p_y;
+    return p_pnt;
+}
+
+function move_point(p_pnt, p_delta) {
+    return move_xy(p_pnt, p_delta.x, p_delta.y);
+}
+
+function scale_xy(p_x, p_y, p_scaler) {
+    return create_point(p_scaler(p_x), p_scaler(p_y));
+}
+
+function scale_point(p_pnt, p_scaler) {
+    return scale_xy(p_pnt.x, p_pnt.y, p_scaler);
+}
+
+function rotate_xy(p_x, p_y, p_ang) {
+    // in radian
+    // | c -s ||x|
+    // | s  c ||y|
+    var c = Math.cos(p_ang), s = Math.sin(p_ang);
+    return create_point(c * p_x - s * p_y, s * p_x + c * p_y);
+}
+
+function rotate_point(p_pnt, p_ang) {
+    return rotate_xy(p_pnt.x, p_pnt.y, p_ang);
+}
+
+function create_point(p_x, p_y) {
+    return { x: p_x, y: p_y };
+}
+
+function create_vector(p_s, p_e) {
+    var delta = create_point(p_e.x - p_s.x, p_e.y - p_s.y);
+    var mag = Math.sqrt(delta.x * delta.x + delta.y * delta.y);
+    var unit_vec = create_point(delta.x / mag, delta.y / mag);
+    return {
+        sp: p_s, ep: p_e,
+        cp: create_point((p_s.x + p_e.x) / 2, (p_s.y + p_e.y) / 2),
+        df: delta, mg: mag,
+        uv: unit_vec,
+        ng: atand(unit_vec.y / unit_vec.x) // angle
+    };
+
+    //return {
+    //    sp: p_s, ep: p_e,
+    //    df: function () { create_point(this.ep.x - this.sp.x, this.ep.y - this.sp.y) },
+    //    mg: function () { Math.sqrt(this.df().x * this.df().x + this.df().y * this.df().y) },
+    //    uv: function () { create_point(this.df().x / this.mg(), this.df().y / this.mg()) },
+    //    ng: function () { atand(this.uv().y / this.uv().x) } // angle
+    //};
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////// draw basic elements : members, supports, loads, dimensions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -781,7 +824,6 @@ function atand(p_tan_value) {
 //////function draw_hinge(p_svg_mom, p_org_x, p_org_y, p_ang) {
 //////    // variables for loc, size
 //////    var tri_w = 15, tri_h = gv_ele_unit;
-//////    var hatch_w = 40, hatch_h = gv_ele_unit, hatch_x = -hatch_w / 2, hatch_y = tri_h;
 //////    var tri_str = -tri_w / 2 + "," + tri_h + " " + tri_w / 2 + "," + tri_h + " 0,0";
 
 //////    // draw hinge
@@ -790,7 +832,7 @@ function atand(p_tan_value) {
 //////    hinge.append("polygon") // triangle
 //////        .attr("points", tri_str)
 //////        .attr("style", "fill:white;stroke-width:1;stroke:dimgrey");
-//////    draw_fix(hinge, 0, hatch_y, 0); // draw fix
+//////    draw_fix(hinge, 0, gv_ele_unit, 0); // draw fix
 //////}
 
 //////function draw_hinge_reactions(p_svg_mom, p_org_x, p_org_y, p_ang, p_node_label, p_h_up_dn, p_v_up_dn) {
@@ -859,8 +901,6 @@ function atand(p_tan_value) {
 
 //////function draw_point_load(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_unit, p_up_dn, p_drag, p_id) {
 //////    // variables for loc, size
-//////    var tri_w = 6, tri_h = 6;
-//////    var tri_str = -tri_w / 2 + "," + -tri_h + " " + tri_w / 2 + "," + -tri_h + " 0,0";
 //////    var v_load = p_load * gv_ratio_load;
 //////    var v_label = Math.round(p_load * 10) / 10 + p_unit;
 //////    if (Math.abs(p_load) < 0.01) {
@@ -917,8 +957,6 @@ function atand(p_tan_value) {
 
 //////function draw_point_moment(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_dir, p_unit_label, p_sub) {
 //////    // variables for loc, size
-//////    var tri_w = 6, tri_h = 6;
-//////    var tri_str = -tri_w / 2 + "," + -tri_h + " " + tri_w / 2 + "," + -tri_h + " 0,0";
 //////    var mnt_rad = 20;
 //////    var v_label = Math.round(p_load * 10) / 10 + p_unit_label;
 //////    if (Math.abs(p_load) < 0.01) {
@@ -1004,8 +1042,6 @@ function atand(p_tan_value) {
 
 //////function draw_reaction_force(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_label, p_sub, p_up_dn) {
 //////    // variables for loc, size
-//////    var tri_w = 6, tri_h = 6;
-//////    var tri_str = -tri_w / 2 + "," + -tri_h + " " + tri_w / 2 + "," + -tri_h + " 0,0";
 //////    var v_load = p_load * gv_ratio_load;
 //////    var v_label = p_label;
 //////    if (Math.abs(p_load) < 0.01) {
@@ -1086,8 +1122,6 @@ function atand(p_tan_value) {
 
 ////////function draw_arrow(p_svg_mom, p_org_x, p_org_y, p_ang, p_magnitude, p_drag) {
 ////////    // downward arrowhead(triangle) at (0,0)
-////////    var tri_w = 6, tri_h = 6;
-////////    var tri_str = -tri_w / 2 + "," + -tri_h + " " + tri_w / 2 + "," + -tri_h + " 0,0";
 ////////    p_svg_mom.append("polygon")
 ////////        .attr("points", tri_str)
 ////////        .attr("style", "fill:dimgrey;stroke-width:1;stroke:dimgrey");
