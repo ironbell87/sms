@@ -371,33 +371,50 @@
 
 var g_span = 600, g_load = 100, g_load_type = "point", g_loc_fr = 300, g_loc_to = 300;
 //var g_Va = 50, g_Vb = 50, g_Ha = 0;
-var gv_pre_x, gv_pre_y, gv_pre_load_width; // for dragging
+var gv_pre_x, gv_pre_y; // for dragging
+const g_support = ["Simple support", "Cantilever"];
+let g_setting = { b: 30.0, h: 50.0, L: 600.0, P: 100.0, E: 2200.0, Support: "Simple support", I: function () { return this.b * Math.pow(this.h, 3) / 12; } };
 
 $(document).ready(function () {
     // update setting
-    $("#setting_space").css("height", "170px");
-    $(document).on("input", "#input_T", function () {
+    $("#setting_space").css("height", "220px");
+    $(document).on("input", "#input_S", function () {
+        var spt_idx = parseInt($(this).val());
+        g_setting.Support = g_support[spt_idx];
+        if ($(".div_setting > label")[2] != undefined) {
+            if (g_setting.Support == g_support[0])
+                $(".div_setting > label")[2].innerHTML = "V<sub>B</sub> (N)"; // an element of array of jQuery is a DOM element, therefore make the DOM element to jQuery element using "$($(..."
+            else
+                $($(".div_setting > label")[2]).html("M<sub>A</sub> (Nmm)"); // $($(... => make jQuery element
+        }
+        $("#label_S").html(g_setting.Support);
+
+        draw_beam_problem();
+        draw_beam_FBD();
+        solve_beam_problem();
+    });
+    $(document).on("input", "#input_LoadType", function () {
         if (parseInt($(this).val()) == 0) { // point load
             g_load_type = "point";
             g_loc_to = g_loc_fr;
-            $("#label_T").html("Point load");
+            $("#label_LoadType").html("Point load");
         }
         else { // point ==> uniform
             g_load_type = "uniform";
             if (g_loc_fr == g_span) g_loc_fr = 0;
             g_loc_to = g_span;
-            $("#label_T").html("Uniform load");
+            $("#label_LoadType").html("Uniform load");
         }
-        draw_simple_beam_problem();
-        draw_simple_beam_FBD();
-        solve_simple_beam_problem();
+        draw_beam_problem();
+        draw_beam_FBD();
+        solve_beam_problem();
     });
     $(document).on("input", "#input_P", function () {
         g_load = parseFloat($(this).val());
         $("#label_P").html(g_load.toFixed(g_digit) + " N");
-        draw_simple_beam_problem();
-        draw_simple_beam_FBD();
-        solve_simple_beam_problem();
+        draw_beam_problem();
+        draw_beam_FBD();
+        solve_beam_problem();
     });
     $(document).on("input", "#input_L", function () {
         var new_span = parseFloat($(this).val());
@@ -406,52 +423,38 @@ $(document).ready(function () {
         g_loc_fr = g_loc_fr * ratio; // rounding to 0, 5, 10, ... makes large error
         g_loc_to = g_loc_to * ratio;
         $("#label_L").html(g_span.toFixed(g_digit) + " mm");
-        draw_simple_beam_problem();
-        draw_simple_beam_FBD();
-        solve_simple_beam_problem();
+        draw_beam_problem();
+        draw_beam_FBD();
+        solve_beam_problem();
     });
 
     // initialize svg
     initialize_svg();
 
-    // draw simple beam, loads
-    draw_simple_beam_problem();
-
-    // draw FBD
-    draw_simple_beam_FBD();
-
-    // solve
-    solve_simple_beam_problem();
+    // draw beam, loads, FBD, and solve
+    draw_beam_problem();
+    draw_beam_FBD();
+    solve_beam_problem();
 });
 
 function drag_load_started() {
     // set point at start of drag
-    gv_pre_x = d3.event.x;
+    gv_pre_x = g_loc_fr * gv_ratio_len;
     gv_pre_y = d3.event.y;
-    gv_pre_load_width = (g_loc_to - g_loc_fr) * gv_ratio_len;
-
-    // show tooltip
-    g_tooltip = d3.select("body").selectAll(".tooltip").data([0]).join("div")
-        .classed("tooltip", true)
-        .style("left", d3.event.sourceEvent.clientX.toString() + "px")
-        .style("top", (d3.event.sourceEvent.clientY + 28).toString() + "px")
-        .style("opacity", 0)
-        .html(g_loc_fr.toString() + ", " + g_loc_to.toString());
-    g_tooltip
-        .transition().duration(500)
-        .style("opacity", .8);
 }
 
 function drag_load_ing() {
+    // if drag is not needed
+    if (d3.select(this).datum().drag == false) return;
+
     // get svg of this load
     var svg_load = d3.select(this.parentNode);
 
     // get new x
     var pre_trans = get_transformation(svg_load.attr("transform"));
     var v_new_x = d3.event.x;
-    var v_end_x = g_loc_to * gv_ratio_len;
 
-    /// apply constraint to end point of load
+    // apply constraint to end point of load
     switch (this.id) {
         case "pnt_load": // coordinate system of parent node is used
             if (v_new_x < 0) v_new_x = 0;
@@ -471,38 +474,38 @@ function drag_load_ing() {
             svg_load.attr("transform", "translate(" + v_new_x + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
             break;
         case "s_u_load": // coordinate system of parent of ufm_load is used
-            v_new_x = d3.event.x; // d3.event.dx + g_loc_fr * gv_ratio_len;
+            v_new_x = Math.max(0, gv_pre_x + d3.event.x);
             v_end_x = g_loc_to * gv_ratio_len;
-            if (v_new_x < 0) v_new_x = 0;
             if (v_end_x <= v_new_x) v_new_x = v_end_x - 5 * gv_ratio_len; // 5 is the min of delta
-            svg_load.attr("transform", "translate(" + (v_new_x - gv_pre_x) + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
+            svg_load.attr("transform", "translate(" + v_new_x + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
             break;
         case "e_u_load": // coordinate system of parent of ufm_load is used
-            v_new_x = g_loc_fr * gv_ratio_len;
-            v_end_x = d3.event.x; // d3.event.dx + g_loc_to * gv_ratio_len;
-            if (gv_span < v_end_x) v_end_x = gv_span;
+            v_new_x = gv_pre_x;
+            v_end_x = Math.min(v_new_x + d3.event.x, gv_span); // d3.event.dx + g_loc_to * gv_ratio_len;
             if (v_end_x <= v_new_x) v_end_x = v_new_x + 5 * gv_ratio_len; // 5 is the min of delta
-            svg_load.attr("transform", "translate(" + (v_end_x - gv_pre_x + gv_pre_load_width) + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
+            svg_load.attr("transform", "translate(" + v_end_x + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
             break;
     }
 
     // update input for position of the load
     g_loc_fr = round_by_unit(v_new_x / gv_ratio_len, 5); // transform to x in graphic to logical; then round to 0, 5, 10, 15, ...
     g_loc_to = round_by_unit(v_end_x / gv_ratio_len, 5); // transform to x in graphic to logical; then round to 0, 5, 10, 15, ...
-    g_tooltip
-        .style("left", d3.event.sourceEvent.clientX.toString() + "px")
-        .html(g_loc_fr.toString() + ", " + g_loc_to.toString());
+
+    // redraw problem
+    draw_beam_problem();
+    draw_beam_FBD();
+    solve_beam_problem();
 }
 
 function drag_load_ended() {
-    // hide tooltip
-    g_tooltip.transition().duration(500).style("opacity", 0);
-    g_tooltip = undefined;
+    //// hide tooltip
+    //g_tooltip.transition().duration(500).style("opacity", 0);
+    //g_tooltip = undefined;
 
-    // redraw problem
-    draw_simple_beam_problem();
-    draw_simple_beam_FBD();
-    solve_simple_beam_problem();
+    //// redraw problem
+    //draw_simple_beam_problem();
+    //draw_simple_beam_FBD();
+    //solve_simple_beam_problem();
 }
 
 function initialize_svg() {
@@ -513,31 +516,43 @@ function initialize_svg() {
     g_fbd = d3.select("#fbd_svg").append("g"); // set svg group
 }
 
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // draw beams and frames
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function draw_simple_beam(p_svg_mom, p_org_x, p_org_y, p_ang, p_span) {
+function draw_beam(p_svg_mom, p_org_x, p_org_y, p_ang, p_span) {
     // translate and then rotate
     p_svg_mom.attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")");
 
     // set variable
     span = p_span * gv_ratio_len;
 
-    // beam and label
+    // beam
     draw_single_member(p_svg_mom, 0, 0, 0, span); // 0 = rotation in cw
-    draw_label(p_svg_mom, 0, 0, 0, -gv_ele_unit, 0, "A", undefined, "middle"); // undefined = subscript
-    draw_label(p_svg_mom, span, 0, 0, gv_ele_unit / 2, 0, "B", undefined, "middle"); // undefined = subscript
+
+    // label
+    p_svg_mom.selectAll("text.label").remove();
+    var labels = [{ x: 0, y: 0, ang: 0, offset: -gv_ele_unit, offset_ang: 0, label: "A", anchor: "middle" },
+                  { x: span, y: 0, ang: 0, offset: gv_ele_unit, offset_ang: 0, label: "B", anchor: "middle" }];
+    if (g_setting.Support == g_support[1]) {
+        labels = [{ x: 0, y: 0, ang: 0, offset: gv_ele_unit * 1.7, offset_ang: 60, label: "A", anchor: "middle" },
+                  { x: span, y: 0, ang: 0, offset: gv_ele_unit, offset_ang: 0, label: "B", anchor: "middle" }];
+    }
+    draw_labels(p_svg_mom, labels);
 
     // support
-    draw_hinge(p_svg_mom, 0, gv_ele_unit / 2, 0);
-    draw_roller(p_svg_mom, span, gv_ele_unit / 2, 0);
+    p_svg_mom.selectAll("g.support").remove();
+    var supports = [{ type: "hinge", x: 0, y: gv_ele_unit / 2, ang: 0 },
+                    { type: "roller", x: span, y: gv_ele_unit / 2, ang: 0 }];
+    if (g_setting.Support == g_support[1]) {
+        supports = [{ type: "fix", x: 0, y: 0, ang: p_ang + 90 }];
+    }
+    draw_supports(p_svg_mom, supports);
 
     // dimensions
     draw_dimensions(p_svg_mom, 0, 0, 0, "beam_dim", [p_span], gv_margin_unit * 3, "mm", "dn", true);
 }
 
-function draw_simple_beam_fbd(p_svg_mom, p_org_x, p_org_y, p_ang, p_span) {
+function draw_beam_fbd(p_svg_mom, p_org_x, p_org_y, p_ang, p_span) {
     // translate and then rotate
     p_svg_mom.attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")");
 
@@ -546,31 +561,22 @@ function draw_simple_beam_fbd(p_svg_mom, p_org_x, p_org_y, p_ang, p_span) {
 
     // beam and label
     draw_single_member(p_svg_mom, 0, 0, 0, span); // 0 = rotation in cw
-    //draw_label(p_svg_mom, 0, 0, 0, gv_ele_unit * 1.5, -135, "A", undefined, "middle"); // undefined = subscript
-    //draw_label(p_svg_mom, span, 0, 0, gv_ele_unit * 0.75, -45, "B", undefined, "middle"); // undefined = subscript
 
     // support reactions
-    draw_hinge_reactions(p_svg_mom, 0, gv_ele_unit / 2, 0, "A", "up", "up");
-    draw_roller_reactions(p_svg_mom, span, gv_ele_unit / 2, 0, "B", "up");
-}
-
-/*function draw_cantilever_beam(p_svg_mom, p_org_x, p_org_y, p_ang, p_len, p_sect_hgt, p_l_spt) {
-    // beam
-    draw_single_member(p_svg_mom, p_org_x, p_org_y, p_ang, p_len, p_sect_hgt); // 0 = rotation in cw
-
-    // support
-    if (p_l_spt == "fix") {
-        draw_fix(p_svg_mom, p_org_x, p_org_y, p_ang + 90);
+    if (g_setting.Support == g_support[0]) { // simple support
+        p_svg_mom.selectAll("g.fix_reaction").remove();
+        p_svg_mom.selectAll("g.fix_mnt_reaction").remove();
+        draw_hinge_reactions(p_svg_mom, 0, gv_ele_unit / 2, 0, "A");
+        draw_roller_reactions(p_svg_mom, span, gv_ele_unit / 2, 0, "B");
     }
-    else if (p_l_spt == "free") {
-        draw_fix(p_svg_mom, p_org_x + p_len, p_org_y, p_ang - 90);
-    }
-    else {
-        alert("Support must be fix or free!")
+    else { // cantilever
+        p_svg_mom.selectAll("g.hinge_reaction").remove();
+        p_svg_mom.selectAll("g.roller_reaction").remove();
+        draw_fix_reactions(p_svg_mom, 0, gv_ele_unit / 2, 180, "A");
     }
 }
 
-function draw_simple_Gerber_beam(p_svg_mom, p_org_x, p_org_y, p_ang, p_len, p_sect_hgt, p_l_spt, p_loc_hinge, p_loc_roller) {
+/*function draw_simple_Gerber_beam(p_svg_mom, p_org_x, p_org_y, p_ang, p_len, p_sect_hgt, p_l_spt, p_loc_hinge, p_loc_roller) {
     // beam
     draw_single_member(p_svg_mom, p_org_x, p_org_y, p_ang, p_len, p_sect_hgt); // 0 = rotation in cw
 
@@ -638,28 +644,29 @@ function draw_2c_1b_simple_frame(p_svg_mom, p_org_x, p_org_y, p_ang, p_len, p_hg
     }
 }*/
 
-function draw_simple_beam_problem() {
+function draw_beam_problem() {
     // prepare variable for drawing
     gv_ratio_len = gv_span / g_span;
     gv_ratio_load = gv_load / g_load;
 
-    // draw simple beam and loads
+    // draw beam
     var sx = 100, sy = 100, ang = 0;
-    draw_simple_beam(g_structure, sx, sy, ang, g_span);
+    draw_beam(g_structure, sx, sy, ang, g_span);
+    
+    // draw loads
     draw_beam_loads(g_structure, 1, true, true); // 1 = the 1st load, true = draw dimension, true = make load draggable
 }
 
-function draw_simple_beam_FBD() {
-    // if FBD is not needed
+function draw_beam_FBD() {
     if (g_fbd == undefined) return;
 
     // draw free body diagram
     var sx = 100, sy = 100, ang = 0;
-    draw_simple_beam_fbd(g_fbd, sx, sy, ang, g_span);
-    draw_beam_loads(g_fbd, 1, true); // 1 = the 1st load, true = draw dimension
+    draw_beam_fbd(g_fbd, sx, sy, ang, g_span);
+    draw_beam_loads(g_fbd, 1, true, false); // 1 = the 1st load, true = draw dimension
 }
 
-function solve_simple_beam_problem() {
+function solve_beam_problem() {
     // get magnitude of load and location
     var load = g_load, dist = g_loc_fr;
     if (g_load_type == "uniform") {
@@ -669,6 +676,7 @@ function solve_simple_beam_problem() {
 
     // compute reactions
     var reactions = [0, load * (g_span - dist) / g_span, load * (dist / g_span)]; // g_Ha, g_Va, g_Vb
+    if (g_setting.Support == g_support[1]) reactions = [0, load, load * dist]; // g_Ha, g_Va, g_Ma; for cantilever
 
     // show reactions
     var inputs = $(".div_setting > input");

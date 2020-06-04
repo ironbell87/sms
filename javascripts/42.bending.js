@@ -2,8 +2,7 @@
 const g_bg_sz = [700, 1000]; // size of svg for problem
 const g_mat = [["A", "B", "C", "D", "E"],
                [2200, 3150, 4660, 5219, 6000]];
-const g_support = ["Simple support", "Cantilever"];
-let g_setting = { b: 30.0, h: 50.0, L: 600.0, P: 100.0, E: 2200.0, Support: "Simple support", I: function () { return this.b * Math.pow(this.h, 3) / 12; } };
+//let g_setting = { b: 30.0, h: 50.0, L: 600.0, P: 100.0, E: 2200.0, Support: "Simple support", I: function () { return this.b * Math.pow(this.h, 3) / 12; } };
 let g_section, g_deflection, g_section_scaler, g_beam_scaler, g_defl_scaler, g_scale_x = gv_span / 2;
 
 $(document).ready(function () {
@@ -14,7 +13,7 @@ $(document).ready(function () {
         if (g_setting.Support == g_support[0]) g_loc_fr = g_loc_to = g_span / 2; // in simple beam, load at beam center
         else g_loc_fr = g_loc_to = g_span; // in cantilever beam, load at beam tip
         $("#label_S").html(g_setting.Support);
-        draw_problem();
+        draw_beam_problem();
         draw_measurement();
     });
     $(document).on("input", "#input_M", function () {
@@ -35,28 +34,28 @@ $(document).ready(function () {
         g_span = g_setting.L;
         g_loc_fr = g_loc_fr * ratio; // rounding to 0, 5, 10, ... makes large error
         g_loc_to = g_loc_to * ratio;
-        draw_problem();
+        draw_beam_problem();
         draw_measurement();
     });
     $(document).on("input", "#input_P", function () {
         g_setting.P = parseFloat($(this).val());
         $("#label_P").html(g_setting.P.toFixed(g_digit) + " N");
         g_load = g_setting.P;
-        draw_problem();
+        draw_beam_problem();
         draw_measurement();
     });
     $(document).on("input", "#input_b", function () {
         g_setting.b = parseFloat($(this).val());
         $("#label_b").html(g_setting.b.toFixed(g_digit) + " mm");
         draw_section();
-        draw_problem();
+        draw_beam_problem();
         draw_measurement();
     });
     $(document).on("input", "#input_h", function () {
         g_setting.h = parseFloat($(this).val());
         $("#label_h").html(g_setting.h.toFixed(g_digit) + " mm");
         draw_section();
-        draw_problem();
+        draw_beam_problem();
         draw_measurement();
     });
 
@@ -65,7 +64,7 @@ $(document).ready(function () {
 
     // draw section and problem
     draw_section();
-    draw_problem();
+    draw_beam_problem();
     draw_measurement();
 });
 
@@ -84,6 +83,7 @@ function initialize_svg() {
 
     var sx = g_bg_sz[0] / 2, sy = gv_ele_unit;
     $("#section_svg, #prob_svg, #deflection_svg").empty();
+    append_hatching_pattern("#prob_svg"); // prepare hatching pattern
     g_section = d3.select("#section_svg").append("g") // set svg group
         .attr("transform", "translate(150, 175)");
     g_structure = d3.select("#prob_svg").append("g") // set svg group
@@ -113,11 +113,6 @@ function draw_section() {
     gv_ratio_len = b / g_setting.b; // used in draw_dimensions
     draw_dimensions(g_section, -b / 2, 0, 0, "b_dim", [g_setting.b], h / 2 + gv_margin_unit, "mm", "dn", false);
     draw_dimensions(g_section, 0, h / 2, -90, "h_dim", [g_setting.h], b / 2 + 2 * gv_margin_unit, "mm", "dn", false);
-}
-
-function draw_problem() {
-    if (g_setting.Support == g_support[0]) draw_simple_beam_problem();
-    else draw_cantilever_beam_problem();
 }
 
 function draw_measurement() {

@@ -46,15 +46,23 @@
                 <div id="output_space">
                     <p style="text-align: left; cursor: default">2. Free body diagram</p>
                     <div id="fbd_space">
-                        <svg id="fbd_svg" width="700px" height="220px">
-                            Sorry, your browser does not support inline SVG.
-                        </svg>
-                    </div><br />
-                    <p style="text-align: left; cursor: default">3. Measurement</p>
-                    <div id="reaction_space">
-                        <svg id="reaction_svg" width="700px" height="250px">
-                            Sorry, your browser does not support inline SVG.
-                        </svg>
+                        <div id="fbd_space">
+                            <svg id="fbd_svg" width="700px" height="220px">
+                                Sorry, your browser does not support inline SVG.
+                            </svg>
+                            <div class="div_setting">
+                                <label>H<sub>A</sub> (N)</label>
+                                <input id="input_sigma_x" class="input_setting" type="number" value="0.00" readonly>
+                            </div>
+                            <div class="div_setting">
+                                <label>V<sub>A</sub> (N)</label>
+                                <input id="input_sigma_y" class="input_setting" type="number" value="100.00" readonly>
+                            </div>
+                            <div class="div_setting">
+                                <label>M<sub>A</sub> (Nmm)</label>
+                                <input id="input_tau" class="input_setting" type="number" value="30000.00" readonly>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -9,7 +9,7 @@ var gv_margin_unit = 15, gv_ele_unit = 15;
 var gv_ratio_len, gv_ratio_load;
 
 // variables for trianlge for arrow
-var tri_w = 6, tri_h = 6;
+var tri_w = tri_h = 6;
 var tri_str = -tri_w / 2 + "," + -tri_h + " " + tri_w / 2 + "," + -tri_h + " 0,0";
 
 // variables for structure
@@ -54,43 +54,6 @@ function draw_single_cable_with_points(p_svg_mom, p_sx, p_sy, p_ex, p_ey) {
         .attr("x1", p_sx + vx / 2).attr("y1", p_sy + vy / 2)
         .attr("x2", p_ex - vx / 2).attr("y2", p_ey - vy / 2)
         .attr("style", "stroke:lightgrey; stroke-linejoin:round; stroke-linecap:round; stroke-width:" + (gv_ele_unit / 2));
-}
-
-function draw_pendulum(p_svg_mom, p_x, p_y, p_load, p_drag, p_id) {
-    var svg_defs = p_svg_mom.append("defs"); // define defs for pattern
-    var img_pattern = svg_defs.append("pattern") // create pattern in defs
-        .attr("id", "img_pattern")
-        .attr("height", 1).attr("width", 1)
-        .attr("x", "0").attr("y", "0");
-    img_pattern.append("image") // square image contained in pattern
-        .attr("x", 0).attr("y", 0)
-        .attr("height", 40).attr("width", 40) // image size
-        .attr("xlink:href", "../images/ironman.png");
-    p_svg_mom.append("circle") // set circle fill to the created pattern => make square image to circle image
-        .attr("id", p_id)
-        .attr("cy", 0).attr("cy", 0).attr("r", 20)
-        .attr("fill", "url(#img_pattern)")
-        .attr("transform", "translate(" + p_x + "," + p_y + ") scale(1,-1)"); // translate
-    p_svg_mom.append("text")
-        .attr("x", 0).attr("y", 0).text(p_load)
-        .attr("style", "cursor:default; fill:grey; text-anchor:middle") // start/middle/end
-        .attr("transform", "translate(" + p_x + "," + (p_y - 35) + ") scale(1,-1)");
-
-    // set drag callback function
-    if (p_drag == true) {
-        d3.select("#" + p_id).attr("style", "cursor:pointer; stroke-width:2; stroke:#ff6f6f").call(d3.drag()
-            //.container(p_svg_mom.node()) // make beam the coordinate system of dragging point
-            .on("start", drag_pendulum_started)
-            .on("drag", drag_pendulum_ing)
-            .on("end", drag_pendulum_ended));
-    }
-    //p_svg_mom.append("text")
-    //    //.attr("transform", "translate(" + p_x + "," + p_y + ")") // translate
-    //    .attr("x", p_x).attr("y", p_y)
-    //    .attr("text-anchor", "middle").attr("dominant-baseline", "central")
-    //    .attr("font-family", "FontAwesome")
-    //    .attr("font-size", "20px").attr("fill", "white")
-    //    .text("\uf57e"); // \uf57e = globe-asia
 }
 
 function draw_pin(p_svg_mom, p_org_x, p_org_y, p_ang) {
@@ -159,82 +122,104 @@ function draw_wgt_hg(p_d3, p_x, p_hg_hgt, p_large_dot, p_drag, p_y) {
 }
 
 function draw_single_member(p_svg_mom, p_org_x, p_org_y, p_ang, p_span) {
-    p_svg_mom.append("line") // line not rectangle
-        .attr("x1", 0).attr("y1", 0)
-        .attr("x2", p_span).attr("y2", 0)
-        .attr("style", "stroke:dimgrey; stroke-linejoin:miter; stroke-linecap:butt; stroke-width:" + gv_ele_unit)
-        .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")"); // translate and then rotate
-    p_svg_mom.append("line") // line not rectangle
-        .attr("x1", 0.5).attr("y1", 0)
-        .attr("x2", (p_span - 0.5)).attr("y2", 0)
-        .attr("style", "stroke:lightgrey; stroke-linejoin:miter; stroke-linecap:butt; stroke-width:" + (gv_ele_unit - 1))
+    var members = [{ s: 0, e: p_span, width: gv_ele_unit, color: "dimgrey" },
+                   { s: 0.5, e: p_span - 0.5, width: gv_ele_unit - 1, color: "lightgrey" }];
+    p_svg_mom.selectAll(".single_member").data(members).join("line").classed("single_member", true) // line not rectangle
+        .attr("x1", d => d.s).attr("y1", 0)
+        .attr("x2", d => d.e).attr("y2", 0)
+        .attr("style", d => "stroke:" + d.color + "; stroke-linejoin:miter; stroke-linecap:butt; stroke-width:" + d.width)
         .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")"); // translate and then rotate
 }
 
-function draw_roller(p_svg_mom, p_org_x, p_org_y, p_ang) {
+function draw_supports(p_d3, p_supports) {
+    p_d3.selectAll("g.support").data(p_supports).join("g").classed("support", true)
+        .attr("transform", d => "translate(" + d.x + "," + d.y + ") rotate(" + d.ang + ")") // translate and then rotate
+        .each(function (d) {
+            if (d.type == "hinge") draw_hinge(d3.select(this));
+            else if (d.type == "roller") draw_roller(d3.select(this));
+            else draw_fix(d3.select(this), 0);
+        });
+}
+
+//function draw_roller(p_svg_mom, p_org_x, p_org_y, p_ang) {
+//    // variables for loc, size
+//    var rad = gv_ele_unit / 2;
+//    var hatch_w = 40, hatch_h = gv_ele_unit, hatch_x = -hatch_w / 2, hatch_y = rad * 2;
+
+//    // draw roller
+//    var roller = p_svg_mom.append("g") // set group for roller
+//        .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")"); // translate and then rotate
+//    roller.append("circle") // roller
+//        .attr("cx", 0).attr("cy", rad).attr("r", rad)
+//        .attr("style", "fill:white; stroke-width:1; stroke:dimgrey");
+//    draw_fix(roller, 0, hatch_y, 0); // draw fix
+//}
+function draw_roller(p_d3) {
     // variables for loc, size
     var rad = gv_ele_unit / 2;
     var hatch_w = 40, hatch_h = gv_ele_unit, hatch_x = -hatch_w / 2, hatch_y = rad * 2;
 
     // draw roller
-    var roller = p_svg_mom.append("g") // set group for roller
-        .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")"); // translate and then rotate
-    roller.append("circle") // roller
+    p_d3.selectAll("circle").data([0]).join("circle") // roller
         .attr("cx", 0).attr("cy", rad).attr("r", rad)
         .attr("style", "fill:white; stroke-width:1; stroke:dimgrey");
-    draw_fix(roller, 0, hatch_y, 0); // draw fix
+    draw_fix(p_d3, gv_ele_unit); // draw fix
 }
 
-function draw_roller_reactions(p_svg_mom, p_org_x, p_org_y, p_ang, p_node_label, p_v_up_dn) {
-    // draw concentrated load with label
-    var v_load = 0;
-    draw_reaction_force(p_svg_mom, p_org_x, p_org_y, 180, v_load, "V", p_node_label); // p_node_label = A, B, .., i.e, subscript of reaction label
-}
+//function draw_hinge(p_svg_mom, p_org_x, p_org_y, p_ang) {
+//    // variables for loc, size
+//    var tri_w = tri_h = gv_ele_unit;
+//    var tri_str = -tri_w / 2 + "," + tri_h + " " + tri_w / 2 + "," + tri_h + " 0,0";
 
-function draw_hinge(p_svg_mom, p_org_x, p_org_y, p_ang) {
-    // variables for loc, size
-    var tri_w = tri_h = gv_ele_unit;
-    var tri_str = -tri_w / 2 + "," + tri_h + " " + tri_w / 2 + "," + tri_h + " 0,0";
+//    // draw hinge
+//    var hinge = p_svg_mom.append("g") // set group for hinge
+//        .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")"); // translate and then rotate
+//    hinge.append("polygon") // triangle
+//        .attr("points", tri_str)
+//        .attr("style", "fill:white; stroke-width:1; stroke:dimgrey");
+//    draw_fix(hinge, 0, gv_ele_unit, 0); // draw fix
+//}
+function draw_hinge(p_d3) {
+    // variables for trianlge for arrow
+    var m_tri_w = m_tri_h = gv_ele_unit;
+    var m_tri_str = -m_tri_w / 2 + "," + m_tri_h + " " + m_tri_w / 2 + "," + m_tri_h + " 0,0";
 
     // draw hinge
-    var hinge = p_svg_mom.append("g") // set group for hinge
-        .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")"); // translate and then rotate
-    hinge.append("polygon") // triangle
-        .attr("points", tri_str)
+    p_d3.selectAll("polygon").data([0]).join("polygon") // triangle
+        .attr("points", m_tri_str)
         .attr("style", "fill:white; stroke-width:1; stroke:dimgrey");
-    draw_fix(hinge, 0, gv_ele_unit, 0); // draw fix
+    draw_fix(p_d3, gv_ele_unit); // draw fix
 }
 
-function draw_hinge_reactions(p_svg_mom, p_org_x, p_org_y, p_ang, p_node_label) {
-    // draw concentrated load with label
-    var v_load = 0;
-    draw_reaction_force(p_svg_mom, p_org_x, p_org_y, 180, v_load, "V", p_node_label); // p_node_label = A, B, .., i.e, subscript of reaction label
-    draw_reaction_force(p_svg_mom, p_org_x, p_org_y - gv_ele_unit / 2, -90, v_load, "H", p_node_label); // p_node_label = A, B, .., i.e, subscript of reaction label
-}
+//function draw_fix(p_svg_mom, p_org_x, p_org_y, p_ang) {
+//    // variables for loc, size
+//    var hatch_w = 40, hatch_h = gv_ele_unit, hatch_x = -hatch_w / 2, hatch_y = 0;
 
-function draw_fix(p_svg_mom, p_org_x, p_org_y, p_ang) {
+//    // draw fix
+//    var fix = p_svg_mom.append("g") // set group for roller
+//        .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")"); // translate and then rotate
+//    fix.append("line") // line
+//        .attr("x1", hatch_x).attr("y1", hatch_y)
+//        .attr("x2", hatch_x + hatch_w).attr("y2", hatch_y)
+//        .attr("style", "stroke:dimgrey; stroke-width:1");
+//    fix.append("rect") // support
+//        .attr("x", hatch_x).attr("y", hatch_y)
+//        .attr("width", hatch_w).attr("height", hatch_h)
+//        .attr("fill", "url(#hatch)");
+//}
+function draw_fix(p_d3, p_y) {
     // variables for loc, size
-    var hatch_w = 40, hatch_h = gv_ele_unit, hatch_x = -hatch_w / 2, hatch_y = 0;
+    var hatch_w = 40, hatch_h = gv_ele_unit, hatch_x = -hatch_w / 2, hatch_y = p_y;
 
     // draw fix
-    var fix = p_svg_mom.append("g") // set group for roller
-        .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")"); // translate and then rotate
-    fix.append("line") // line
+    p_d3.selectAll("line").data([0]).join("line") // line
         .attr("x1", hatch_x).attr("y1", hatch_y)
         .attr("x2", hatch_x + hatch_w).attr("y2", hatch_y)
         .attr("style", "stroke:dimgrey; stroke-width:1");
-    fix.append("rect") // support
+    p_d3.selectAll("rect").data([0]).join("rect") // support
         .attr("x", hatch_x).attr("y", hatch_y)
         .attr("width", hatch_w).attr("height", hatch_h)
         .attr("fill", "url(#hatch)");
-}
-
-function draw_fix_reactions(p_svg_mom, p_org_x, p_org_y, p_ang, p_node_label) {
-    // draw concentrated load with label
-    var v_load = 0;
-    draw_reaction_force(p_svg_mom, p_org_x, p_org_y, 180, v_load, "V", p_node_label); // p_node_label = A, B, .., i.e, subscript of reaction label
-    draw_reaction_force(p_svg_mom, p_org_x, p_org_y - gv_ele_unit / 2, -90, v_load, "H", p_node_label); // p_node_label = A, B, .., i.e, subscript of reaction label
-    draw_reaction_moment(p_svg_mom, p_org_x, p_org_y - gv_ele_unit / 2, p_ang, v_load, "ccw", p_node_label);
 }
 
 function draw_hinge_joint(p_svg_mom, p_org_x, p_org_y) {
@@ -248,155 +233,321 @@ function draw_hinge_joint(p_svg_mom, p_org_x, p_org_y) {
         .attr("transform", "translate(" + p_org_x + "," + p_org_y + ")"); // translate and then rotate
 }
 
-function draw_point_load(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_unit, p_up_dn, p_drag, p_id) {
-    // variables for loc, size
-    var v_load = p_load * gv_ratio_load;
-    var v_label = (Math.round(p_load * 10) / 10).toFixed(g_digit) + p_unit;
-    if (Math.abs(p_load) < 0.01) { v_load = gv_load; } // in case of no load
+//function draw_roller_reactions(p_svg_mom, p_org_x, p_org_y, p_ang, p_node_label, p_v_up_dn) {
+//    // draw concentrated load with label
+//    var v_load = 0;
+//    draw_reaction_force(p_svg_mom, p_org_x, p_org_y, 180, v_load, "V", p_node_label); // p_node_label = A, B, .., i.e, subscript of reaction label
+//}
+function draw_roller_reactions(p_svg_mom, p_org_x, p_org_y, p_ang, p_node_label, p_v_up_dn) {
+    var v_label = "V<tspan style = 'baseline-shift: sub; font-size: 0.8em;' >" + p_node_label + "</tspan >";
+    var loads = [{ x: p_org_x, y: p_org_y, ang: 180, mg: gv_load, label: v_label, drag: false, id: undefined }];
+    draw_point_load(p_svg_mom, "roller_reaction", loads);
+}
 
-    // set location along the p_up_dn
-    var up_dn_offset = 0, text_y = -v_load - 10;
-    if (p_up_dn == "up") { // if upward load
-        alert("### p_up_dn is used!! A close investigation is needed!! ###");
-        up_dn_offset = v_load;
-        text_y = up_dn_offset + 10;
-    }
+//function draw_hinge_reactions(p_svg_mom, p_org_x, p_org_y, p_ang, p_node_label) {
+//    // draw concentrated load with label
+//    var v_load = 0;
+//    draw_reaction_force(p_svg_mom, p_org_x, p_org_y, 180, v_load, "V", p_node_label); // p_node_label = A, B, .., i.e, subscript of reaction label
+//    draw_reaction_force(p_svg_mom, p_org_x, p_org_y - gv_ele_unit / 2, -90, v_load, "H", p_node_label); // p_node_label = A, B, .., i.e, subscript of reaction label
+//}
+function draw_hinge_reactions(p_svg_mom, p_org_x, p_org_y, p_ang, p_node_label) {
+    var v_label = "V<tspan style = 'baseline-shift: sub; font-size: 0.8em;' >" + p_node_label + "</tspan >";
+    var loads = [{ x: p_org_x, y: p_org_y, ang: 180, mg: gv_load, label: v_label, drag: false, id: undefined }];
+    loads.push({ x: p_org_x, y: p_org_y - gv_ele_unit / 2, ang: -90, mg: gv_load, label: "H" + v_label.substr(1), drag: false, id: undefined });
+    draw_point_load(p_svg_mom, "hinge_reaction", loads);
+}
 
+//function draw_fix_reactions(p_svg_mom, p_org_x, p_org_y, p_ang, p_node_label) {
+//    // draw concentrated load with label
+//    var v_load = 0;
+//    draw_reaction_force(p_svg_mom, p_org_x, p_org_y, 180, v_load, "V", p_node_label); // p_node_label = A, B, .., i.e, subscript of reaction label
+//    draw_reaction_force(p_svg_mom, p_org_x, p_org_y - gv_ele_unit / 2, -90, v_load, "H", p_node_label); // p_node_label = A, B, .., i.e, subscript of reaction label
+//    draw_reaction_moment(p_svg_mom, p_org_x, p_org_y - gv_ele_unit / 2, p_ang, v_load, "ccw", p_node_label);
+//}
+function draw_fix_reactions(p_svg_mom, p_org_x, p_org_y, p_ang, p_node_label) {
+    var v_label = "V<tspan style = 'baseline-shift: sub; font-size: 0.8em;' >" + p_node_label + "</tspan >";
+    var loads = [{ x: p_org_x, y: p_org_y, ang: 180, mg: gv_load, label: v_label, drag: false, id: undefined }];
+    loads.push({ x: p_org_x, y: p_org_y - gv_ele_unit / 2, ang: -90, mg: gv_load, label: "H" + v_label.substr(1), drag: false, id: undefined });
+    draw_point_load(p_svg_mom, "fix_reaction", loads);
+    var mnts = [{ x: p_org_x, y: p_org_y - gv_ele_unit / 2, ang: p_ang, mg: gv_load, label: "M" + v_label.substr(1), drag: false, id: undefined, rad: 20, dir: "ccw" }];
+    draw_point_moment(p_svg_mom, "fix_mnt_reaction", mnts);
+}
+
+//function draw_point_load(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_unit, p_up_dn, p_drag, p_id) {
+//    //// variables for loc, size
+//    //var v_load = p_load * gv_ratio_load;
+//    //var v_label = (Math.round(p_load * 10) / 10).toFixed(g_digit) + p_unit;
+//    //if (Math.abs(p_load) < 0.01) { v_load = gv_load; } // in case of no load
+//    var v_load = (Math.abs(p_load) < 0.01) ? gv_load : p_load * gv_ratio_load;
+//    var v_label = (Math.round(p_load * 10) / 10).toFixed(g_digit) + p_unit;
+
+//    // set location along the p_up_dn
+//    var up_dn_offset = 0, text_y = -v_load - 10;
+//    if (p_up_dn == "up") { // if upward load
+//        alert("### p_up_dn is used!! A close investigation is needed!! ###");
+//        up_dn_offset = v_load;
+//        text_y = up_dn_offset + 10;
+//    }
+
+//    // draw force
+//    var pnt_frc = p_svg_mom.append("g") // set group for arrow
+//        .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")"); // translate and then rotate
+//    pnt_frc.append("line") // line
+//        //.attr("transform", "translate(0," + up_dn_offset + ")")
+//        .attr("x1", 0).attr("y1", 0)
+//        .attr("x2", 0).attr("y2", -v_load)
+//        .attr("style", "stroke-width:1; stroke:dimgrey");
+//    pnt_frc.append("polygon") // triangle
+//        //.attr("transform", "translate(0," + up_dn_offset + ")")
+//        .attr("points", tri_str)
+//        .attr("style", "fill:dimgrey; stroke-width:1; stroke:dimgrey");
+
+//    // write magnitude of load
+//    if (p_unit != undefined) { // do not write magnitude for distributed load
+//        var m_svg_mom = pnt_frc.append("text") // magnitude
+//            .attr("transform", "translate(0, " + text_y + ") rotate(" + -p_ang + ")") // translate and then rotate the object and axes
+//            .attr("x", 0).attr("y", 0)
+//            .text(v_label)
+//            .attr("style", "cursor:default; fill:grey; text-anchor:middle")
+//            .attr("id", "load_magnitude");
+//    }
+
+//    // set drag callback function
+//    if (p_drag == true) {
+//        if (p_id != "pnt_load") {
+//            p_svg_mom = d3.select(p_svg_mom.node().parentNode);
+//        }
+//        pnt_frc.select("polygon").attr("style", "cursor:pointer; fill:#ff6f6f; stroke-width:3; stroke:#ff6f6f").call(d3.drag()
+//            .container(p_svg_mom.node()) // make beam the coordinate system of dragging point
+//            .on("start", drag_load_started)
+//            .on("drag", drag_load_ing)
+//            //.on("drag", function () { drag_arrow_ing(pnt_frc, p_org_y); }) // different type of function call for passing parameters
+//            .on("end", drag_load_ended))
+//            .attr("id", p_id);
+//        pnt_frc.select("line").attr("style", "stroke-width:1; stroke:#ff6f6f");
+//        //pnt_frc.select("text").attr("style", "cursor: pointer; fill:#ff6f6f; text-anchor:middle; text-shadow:0px 0px 5px grey");
+//    }
+//}
+function draw_point_load(p_d3, p_class, p_loads) {
     // draw force
-    var pnt_frc = p_svg_mom.append("g") // set group for arrow
-        .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")"); // translate and then rotate
-    pnt_frc.append("line") // line
-        //.attr("transform", "translate(0," + up_dn_offset + ")")
+    var pnt_frc = p_d3.selectAll("g." + p_class).data(p_loads).join("g").classed(p_class, true) // set group for arrow
+        .attr("transform", load => "translate(" + [load.x, load.y] + ") rotate(" + load.ang + ")"); // translate and then rotate
+    pnt_frc.selectAll("line").data(load => [load]).join("line") // line
         .attr("x1", 0).attr("y1", 0)
-        .attr("x2", 0).attr("y2", -v_load)
-        .attr("style", "stroke-width:1; stroke:dimgrey");
-    pnt_frc.append("polygon") // triangle
-        //.attr("transform", "translate(0," + up_dn_offset + ")")
+        .attr("x2", 0).attr("y2", d => -d.mg)
+        .attr("style", d => (d.drag == true) ? "stroke-width:1; stroke:#ff6f6f" : "stroke-width:1; stroke:dimgrey");
+    pnt_frc.selectAll("polygon").data(load => [load]).join("polygon") // triangle
         .attr("points", tri_str)
-        .attr("style", "fill:dimgrey; stroke-width:1; stroke:dimgrey");
-
-    // write magnitude of load
-    if (p_unit != undefined) { // do not write magnitude for distributed load
-        var m_svg_mom = pnt_frc.append("text") // magnitude
-            .attr("transform", "translate(0, " + text_y + ") rotate(" + -p_ang + ")") // translate and then rotate the object and axes
-            .attr("x", 0).attr("y", 0)
-            .text(v_label)
-            .attr("style", "cursor:default; fill:grey; text-anchor:middle")
-            .attr("id", "load_magnitude");
-    }
+        .attr("style", d => (d.drag == true) ? "cursor:pointer; fill:#ff6f6f; stroke-width:3; stroke:#ff6f6f" : "fill:dimgrey; stroke-width:1; stroke:dimgrey");
+    pnt_frc.selectAll("text").data(load => [load]).join("text") // magnitude
+        .attr("transform", d => "translate(0, " + -(d.mg + 10) + ") rotate(" + -d.ang + ")") // translate and then rotate the object and axes
+        .attr("dominant-baseline", "central")
+        .attr("x", 0).attr("y", 0)
+        .html(d => d.label)
+        .attr("style", "cursor:default; fill:grey; text-anchor:middle")
+        .attr("id", "load_magnitude");
 
     // set drag callback function
-    if (p_drag == true) {
-        if (p_id != "pnt_load") {
-            p_svg_mom = d3.select(p_svg_mom.node().parentNode);
-        }
-        //pnt_frc.select("polygon").style("cursor", "pointer").call(d3.drag() //pnt_frc.on("click", toggleColor);
-        pnt_frc.select("polygon").attr("style", "cursor:pointer; fill:#ff6f6f; stroke-width:3; stroke:#ff6f6f").call(d3.drag() //pnt_frc.on("click", toggleColor);
-            .container(p_svg_mom.node()) // make beam the coordinate system of dragging point
-            .on("start", drag_load_started)
-            .on("drag", drag_load_ing)
-            //.on("drag", function () { drag_arrow_ing(pnt_frc, p_org_y); }) // different type of function call for passing parameters
-            .on("end", drag_load_ended))
-            .attr("id", p_id);
-        pnt_frc.select("line").attr("style", "stroke-width:1; stroke:#ff6f6f");
-        //pnt_frc.select("text").attr("style", "cursor: pointer; fill:#ff6f6f; text-anchor:middle; text-shadow:0px 0px 5px grey");
-    }
+    //console.log("point setting dragging", p_d3.node().parentNode, g_structure.node().parentNode, g_structure.parent);
+    pnt_frc.selectAll("polygon").attr("id", load => load.id).call(d3.drag()
+        .container(p_d3.node().parentNode) // make beam the coordinate system of dragging point
+        //.container(d3.select("#prob_svg").node()) // make beam the coordinate system of dragging point
+        .on("start", drag_load_started)
+        .on("drag", drag_load_ing)
+        .on("end", drag_load_ended)
+    );
 }
 
-function draw_point_moment(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_dir, p_unit_label, p_sub) {
-    // variables for loc, size
-    var mnt_rad = 20;
-    var v_label = Math.round(p_load * 10) / 10 + p_unit_label;
-    if (Math.abs(p_load) < 0.01) {
-        v_label = p_unit_label;
-    }
+//function draw_point_moment(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_dir, p_unit_label, p_sub) {
+//    // variables for loc, size
+//    var mnt_rad = 20;
+//    var v_label = Math.round(p_load * 10) / 10 + p_unit_label;
+//    if (Math.abs(p_load) < 0.01) {
+//        v_label = p_unit_label;
+//    }
 
+//    // draw force
+//    var pnt_frc = p_svg_mom.append("g") // set group for arrow
+//        .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")"); // translate and then rotate
+//    pnt_frc.append("path") // arc
+//        //.attr("d", "M0,-20 A20,20 0 0,1 0,20")
+//        .attr("d", "M0," + -mnt_rad + " A" + mnt_rad + "," + mnt_rad + " 0 0,1 0," + mnt_rad)
+//        .attr("style", "fill:none; stroke-width:1; stroke:dimgrey");
+//    var arrow = pnt_frc.append("polygon") // arrow
+//        .attr("points", tri_str)
+//        .attr("style", "fill:dimgrey; stroke-width:1; stroke:dimgrey");
+//    if (p_dir == "ccw") {
+//        arrow.attr("transform", "translate(" + -tri_h + "," + -mnt_rad + ") rotate(90)") // translate and then rotate
+//    }
+//    else {
+//        arrow.attr("transform", "translate(" + -tri_h + "," + mnt_rad + ") rotate(90)") // translate and then rotate
+//    }
+
+//    // write magnitude
+//    if (p_unit_label != undefined) {
+//        var m_svg_mom = pnt_frc.append("text") // magnitude
+//            .attr("x", 0).attr("y", -mnt_rad - 4)
+//            .text(v_label)
+//            .attr("style", "cursor:default; fill:grey; text-anchor:middle");
+//        if (p_sub != undefined) {
+//            draw_sup_sub(m_svg_mom, undefined, p_sub);
+//        }
+//    }
+//}
+function draw_point_moment(p_d3, p_class, p_mnts) {
     // draw force
-    var pnt_frc = p_svg_mom.append("g") // set group for arrow
-        .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")"); // translate and then rotate
-    pnt_frc.append("path") // arc
+    var mnt_frc = p_d3.selectAll("g." + p_class).data(p_mnts).join("g").classed(p_class, true) // set group for arrow
+        .attr("transform", mnt => "translate(" + [mnt.x, mnt.y] + ") rotate(" + mnt.ang + ")"); // translate and then rotate
+    mnt_frc.selectAll("path").data(mnt => [mnt]).join("path") // arc
         //.attr("d", "M0,-20 A20,20 0 0,1 0,20")
-        .attr("d", "M0," + -mnt_rad + " A" + mnt_rad + "," + mnt_rad + " 0 0,1 0," + mnt_rad)
+        .attr("d", d => "M0," + -d.rad + " A" + d.rad + "," + d.rad + " 0 0,1 0," + d.rad)
         .attr("style", "fill:none; stroke-width:1; stroke:dimgrey");
-    var arrow = pnt_frc.append("polygon") // arrow
+    mnt_frc.selectAll("polygon").data(mnt => [mnt]).join("polygon") // arrow
         .attr("points", tri_str)
-        .attr("style", "fill:dimgrey; stroke-width:1; stroke:dimgrey");
-    if (p_dir == "ccw") {
-        arrow.attr("transform", "translate(" + -tri_h + "," + -mnt_rad + ") rotate(90)") // translate and then rotate
-    }
-    else {
-        arrow.attr("transform", "translate(" + -tri_h + "," + mnt_rad + ") rotate(90)") // translate and then rotate
-    }
-
-    // write magnitude
-    if (p_unit_label != undefined) {
-        var m_svg_mom = pnt_frc.append("text") // magnitude
-            .attr("x", 0).attr("y", -mnt_rad - 4)
-            .text(v_label)
-            .attr("style", "cursor:default; fill:grey; text-anchor:middle");
-        if (p_sub != undefined) {
-            draw_sup_sub(m_svg_mom, undefined, p_sub);
-        }
-    }
+        .attr("style", "fill:dimgrey; stroke-width:1; stroke:dimgrey")
+        .attr("transform", d => {
+            if (d.dir == "ccw") return "translate(" + -tri_h + "," + -d.rad + ") rotate(90)";
+            else return "translate(" + -tri_h + "," + d.rad + ") rotate(90)";
+        });
+    mnt_frc.selectAll("text").data(mnt => [mnt]).join("text") // magnitude
+        .attr("transform", d => "translate(0, " + (d.rad + 16) + ") rotate(" + -d.ang + ")") // translate and then rotate the object and axes
+        .attr("dominant-baseline", "central")
+        .attr("x", 0).attr("y", 0)
+        .html(d => d.label)
+        .attr("style", "cursor:default; fill:grey; text-anchor:middle")
+        .attr("id", "load_magnitude");
 }
 
-function draw_unifrom_load(p_svg_mom, p_org_x, p_org_y, p_ang, p_width, p_load, p_unit, p_drag, p_id) {
-    // variables for loc, size
-    var v_load = p_load * gv_ratio_load;
-    var v_label = (Math.round(p_load * 10) / 10).toFixed(g_digit) + p_unit;
-    if (Math.abs(p_load) < 0.01) { v_load = gv_load; } // in case of no load
+//function draw_uniform_load(p_svg_mom, p_org_x, p_org_y, p_ang, p_width, p_load, p_unit, p_drag, p_id) {
+//    // variables for loc, size
+//    var v_load = p_load * gv_ratio_load;
+//    var v_label = (Math.round(p_load * 10) / 10).toFixed(g_digit) + p_unit;
+//    if (Math.abs(p_load) < 0.01) { v_load = gv_load; } // in case of no load
 
+//    // draw bounding rect
+//    var ufm_frc = p_svg_mom.append("g")
+//        .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")") // translate and then rotate
+//    ufm_frc.append("rect")
+//        .attr("x", 0).attr("y", -v_load)
+//        .attr("width", p_width).attr("height", v_load)
+//        .attr("style", "fill:lightgrey; fill-opacity:0.2; stroke:darkgrey");
+
+//    // draw each force
+//    var frc_nx = Math.ceil(p_width / 20);
+//    var frc_dx = p_width / frc_nx;
+//    for (i = 0; i <= frc_nx; i++) {
+//        if (i == 0) draw_point_load(ufm_frc, i * frc_dx, 0, 0, p_load, undefined, undefined, p_drag, "s_u_load"); // the 1st; s_u = start of uniform load
+//        else if (i == frc_nx) draw_point_load(ufm_frc, i * frc_dx, 0, 0, p_load, undefined, undefined, p_drag, "e_u_load"); // the last; e_u = end of uniform load
+//        else draw_point_load(ufm_frc, i * frc_dx, 0, 0, p_load, undefined, undefined, false);
+//    }
+
+//    // write magnitude
+//    if (p_unit != undefined) {
+//        var m_svg_mom = ufm_frc.append("text") // magnitude
+//            .attr("x", p_width / 2).attr("y", -v_load - 4) // 6 (of triangle height) + 4 (margin)
+//            .text(v_label)
+//            .attr("style", "cursor:default; fill:grey; text-anchor:middle")
+//            .attr("id", "load_magnitude");
+//    }
+
+//    // set drag callback function
+//    if (p_drag == true) {
+//        ufm_frc.select("rect").attr("style", "cursor:pointer; fill:#ff6f6f; fill-opacity:0.2; stroke-width:1; stroke:#ffafaf").call(d3.drag() //pnt_frc.on("click", toggleColor);
+//            .container(p_svg_mom.node()) // make beam the coordinate system of dragging point
+//            .on("start", drag_load_started)
+//            .on("drag", drag_load_ing)
+//            //.on("drag", function () { drag_arrow_ing(pnt_frc, p_org_y); }) // different type of function call for passing parameters
+//            .on("end", drag_load_ended))
+//            .attr("id", p_id);
+//        //ufm_frc.select("text").attr("style", "cursor: pointer; fill:#ff6f6f; text-anchor:middle; text-shadow:0px 0px 5px grey");
+//    }
+//}
+function draw_uniform_load(p_d3, p_class, p_org_x, p_org_y, p_ang, p_width, p_load, p_label, p_drag, p_id, p_loads) {
     // draw bounding rect
-    var ufm_frc = p_svg_mom.append("g")
-        .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")") // translate and then rotate
-    ufm_frc.append("rect")
-        .attr("x", 0).attr("y", -v_load)
-        .attr("width", p_width).attr("height", v_load)
-        .attr("style", "fill:lightgrey; fill-opacity:0.2; stroke:darkgrey");
+    var ufm_frc = p_d3.selectAll("g.uniform_load").data([0]).join("g").classed("uniform_load", true)
+        .attr("transform", "translate(" + [p_org_x, p_org_y] + ") rotate(" + p_ang + ")") // translate and then rotate
+    ufm_frc.selectAll("rect").data([{ drag: p_drag }]).join("rect")
+        .attr("x", 0).attr("y", -p_load)
+        .attr("width", p_width).attr("height", p_load)
+        .attr("style", d => (d.drag == true) ?
+            "cursor:pointer; fill:#ff6f6f; fill-opacity:0.2; stroke-width:1; stroke:#ffafaf" :
+            "fill:lightgrey; fill-opacity:0.2; stroke:darkgrey");
 
     // draw each force
-    var frc_nx = Math.ceil(p_width / 20);
-    var frc_dx = p_width / frc_nx;
-    for (i = 0; i <= frc_nx; i++) {
-        if (i == 0) draw_point_load(ufm_frc, i * frc_dx, 0, 0, p_load, undefined, undefined, p_drag, "s_u_load"); // the 1st and last; s_u = start of uniform load
-        else if (i == frc_nx) draw_point_load(ufm_frc, i * frc_dx, 0, 0, p_load, undefined, undefined, p_drag, "e_u_load"); // the 1st and last; e_u = end of uniform load
-        else draw_point_load(ufm_frc, i * frc_dx, 0, 0, p_load, undefined, undefined, false);
-    }
+    draw_point_load(ufm_frc, "point_load", p_loads);
 
     // write magnitude
-    if (p_unit != undefined) {
-        var m_svg_mom = ufm_frc.append("text") // magnitude
-            .attr("x", p_width / 2).attr("y", -v_load - 4) // 6 (of triangle height) + 4 (margin)
-            .text(v_label)
-            .attr("style", "cursor:default; fill:grey; text-anchor:middle")
-            .attr("id", "load_magnitude");
-    }
+    ufm_frc.selectAll("text").data([p_load]).join("text") // magnitude
+        .attr("transform", "translate(" + [p_width / 2, -(p_load + 10)] + ") rotate(" + -p_ang + ")") // translate and then rotate the object and axes
+        .attr("x", 0).attr("y", 0)
+        .html(p_label)
+        .attr("style", "cursor:default; fill:grey; text-anchor:middle");
+        //.attr("id", "load_magnitude");
 
     // set drag callback function
-    if (p_drag == true) {
-        ufm_frc.select("rect").attr("style", "cursor:pointer; fill:#ff6f6f; fill-opacity:0.2; stroke-width:1; stroke:#ffafaf").call(d3.drag() //pnt_frc.on("click", toggleColor);
-            .container(p_svg_mom.node()) // make beam the coordinate system of dragging point
-            .on("start", drag_load_started)
-            .on("drag", drag_load_ing)
-            //.on("drag", function () { drag_arrow_ing(pnt_frc, p_org_y); }) // different type of function call for passing parameters
-            .on("end", drag_load_ended))
-            .attr("id", p_id);
-        //ufm_frc.select("text").attr("style", "cursor: pointer; fill:#ff6f6f; text-anchor:middle; text-shadow:0px 0px 5px grey");
-    }
+    //console.log("uniform setting dragging", p_d3.node(), g_structure.node().parentNode, g_structure.parent);
+    ufm_frc.selectAll("rect").attr("id", p_id).call(d3.drag()
+        //.container(p_d3.node()) // make beam the coordinate system of dragging point
+        .container(g_structure.node().parentNode) // make beam the coordinate system of dragging point
+        .on("start", drag_load_started)
+        .on("drag", drag_load_ing)
+        .on("end", drag_load_ended)
+    );
 }
 
+//function draw_beam_loads(p_svg_mom, p_idx, p_draw_dim, p_drag) {
+//    // get input values
+//    var v_loc_fr = g_loc_fr * gv_ratio_len, v_loc_to = g_loc_to * gv_ratio_len;
+
+//    // draw load and dimensions
+//    if (g_load_type == "point") {
+//        draw_point_load(p_svg_mom, v_loc_fr, 0 - gv_ele_unit / 2, 0, g_load, "N", "dn", p_drag, "pnt_load"); // dn = downward load
+//        if (p_draw_dim == false) return;
+//        draw_dimensions(p_svg_mom, 0, 0, 0, "load_dim", [g_loc_fr, (g_span - g_loc_fr)], gv_margin_unit * 5, "mm", "dn");
+//    }
+//    else if (g_load_type == "uniform") {
+//        draw_unifrom_load(p_svg_mom, v_loc_fr, 0 - gv_ele_unit / 2, 0, v_loc_to - v_loc_fr, g_load, "N/mm", p_drag, "ufm_load");
+//        if (p_draw_dim == false) return;
+//        var dims = [g_loc_to - g_loc_fr];
+//        if (Math.abs(g_loc_fr) > 1.0e-3) dims.splice(0, 0, g_loc_fr);
+//        if (Math.abs(g_loc_to - g_span) > 1.0e-3) dims.push(g_span - g_loc_to);
+//        draw_dimensions(p_svg_mom, 0, 0, 0, "load_dim", dims, gv_margin_unit * 5, "mm", "dn");
+//    }
+//}
 function draw_beam_loads(p_svg_mom, p_idx, p_draw_dim, p_drag) {
     // get input values
     var v_loc_fr = g_loc_fr * gv_ratio_len, v_loc_to = g_loc_to * gv_ratio_len;
 
+    // magnitude of load
+    var v_load = (Math.abs(g_load) < 0.01) ? gv_load : g_load * gv_ratio_load;
+    var v_label = (Math.round(g_load * 10) / 10).toFixed(g_digit) + "N";
+
     // draw load and dimensions
     if (g_load_type == "point") {
-        draw_point_load(p_svg_mom, v_loc_fr, 0 - gv_ele_unit / 2, 0, g_load, "N", "dn", p_drag, "pnt_load"); // dn = downward load
+        // prepare data
+        var loads = [{ x: v_loc_fr, y: -gv_ele_unit / 2, ang: 0, mg: v_load, label: v_label, drag: p_drag, id: "pnt_load" }];
+
+        // draw
+        p_svg_mom.selectAll("g.uniform_load").remove(); // remove previous load
+        draw_point_load(p_svg_mom, "point_load", loads);
         if (p_draw_dim == false) return;
         draw_dimensions(p_svg_mom, 0, 0, 0, "load_dim", [g_loc_fr, (g_span - g_loc_fr)], gv_margin_unit * 5, "mm", "dn");
     }
     else if (g_load_type == "uniform") {
-        draw_unifrom_load(p_svg_mom, v_loc_fr, 0 - gv_ele_unit / 2, 0, v_loc_to - v_loc_fr, g_load, "N/mm", p_drag, "ufm_load"); // true = make load draggable
+        // magnitude of load
+        v_label = (Math.round(g_load * 10) / 10).toFixed(g_digit) + "N/mm";
+
+        // prepare data for each force
+        var frc_nx = Math.ceil((v_loc_to - v_loc_fr) / 20);
+        var frc_dx = (v_loc_to - v_loc_fr) / frc_nx;
+        var point_loads = [{ x: 0, y: 0, ang: 0, mg: v_load, label: undefined, drag: p_drag, id: "s_u_load" }]; // the 1st; s_u = start of uniform load
+        for (i = 1; i < frc_nx; i++)
+            point_loads.push({ x: i * frc_dx, y: 0, ang: 0, mg: v_load, label: undefined, drag: false, id: undefined });
+        point_loads.push({ x: frc_nx * frc_dx, y: 0, ang: 0, mg: v_load, label: undefined, drag: p_drag, id: "e_u_load" }); // the last; e_u = end of uniform loa
+
+        // draw
+        p_svg_mom.selectAll("g.point_load").remove(); // remove previous load
+        draw_uniform_load(p_svg_mom, "uniform_load", v_loc_fr, -gv_ele_unit / 2, 0, v_loc_to - v_loc_fr, v_load, v_label, p_drag, "ufm_load", point_loads);
         if (p_draw_dim == false) return;
         var dims = [g_loc_to - g_loc_fr];
         if (Math.abs(g_loc_fr) > 1.0e-3) dims.splice(0, 0, g_loc_fr);
@@ -405,44 +556,72 @@ function draw_beam_loads(p_svg_mom, p_idx, p_draw_dim, p_drag) {
     }
 }
 
-function draw_reaction_force(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_label, p_sub, p_up_dn) {
-    // variables for loc, size
-    var v_load = p_load * gv_ratio_load;
-    var v_label = p_label;
-    if (Math.abs(p_load) < 0.01) { v_load = gv_load; }
+//function draw_reaction_force(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_label, p_sub, p_up_dn) {
+//    // variables for loc, size
+//    var v_load = p_load * gv_ratio_load;
+//    var v_label = p_label;
+//    if (Math.abs(p_load) < 0.01) { v_load = gv_load; }
 
-    // set location along the p_up_dn
-    var up_dn_offset = 0, text_y = -v_load - gv_ele_unit;
-    if (p_up_dn == "up") { // if upward load
-        up_dn_offset = v_load;
-        text_y = up_dn_offset + gv_ele_unit;
-    }
+//    // set location along the p_up_dn
+//    var up_dn_offset = 0, text_y = -v_load - gv_ele_unit;
+//    if (p_up_dn == "up") { // if upward load
+//        up_dn_offset = v_load;
+//        text_y = up_dn_offset + gv_ele_unit;
+//    }
 
-    // draw force
-    var pnt_frc = p_svg_mom.append("g") // set group for arrow
-        .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")"); // translate and then rotate
-    pnt_frc.append("polygon") // triangle
-        //.attr("transform", "translate(0," + up_dn_offset + ")")
-        .attr("points", tri_str)
-        .attr("style", "fill:dimgrey; stroke-width:1; stroke:dimgrey");
-    pnt_frc.append("line") // line
-        //.attr("transform", "translate(0," + up_dn_offset + ")")
-        .attr("x1", 0).attr("y1", 0)
-        .attr("x2", 0).attr("y2", -v_load)
-        .attr("style", "stroke-width:1; stroke:dimgrey");
+//    // draw force
+//    var pnt_frc = p_svg_mom.append("g") // set group for arrow
+//        .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")"); // translate and then rotate
+//    pnt_frc.append("polygon") // triangle
+//        //.attr("transform", "translate(0," + up_dn_offset + ")")
+//        .attr("points", tri_str)
+//        .attr("style", "fill:dimgrey; stroke-width:1; stroke:dimgrey");
+//    pnt_frc.append("line") // line
+//        //.attr("transform", "translate(0," + up_dn_offset + ")")
+//        .attr("x1", 0).attr("y1", 0)
+//        .attr("x2", 0).attr("y2", -v_load)
+//        .attr("style", "stroke-width:1; stroke:dimgrey");
 
-    // write reaction label
-    var m_svg_mom = pnt_frc.append("text") // magnitude
-        .attr("transform", "translate(0, " + text_y + ") rotate(" + -p_ang + ")") // translate and then rotate the object and axes
-        .attr("x", 0).attr("y", 0)
-        .text(v_label)
-        .attr("style", "cursor:default; fill:grey; text-anchor:middle");
-    if (p_sub != undefined) {
-        draw_sup_sub(m_svg_mom, undefined, p_sub);
-    }
-}
+//    // write reaction label
+//    var m_svg_mom = pnt_frc.append("text") // magnitude
+//        .attr("transform", "translate(0, " + text_y + ") rotate(" + -p_ang + ")") // translate and then rotate the object and axes
+//        .attr("x", 0).attr("y", 0)
+//        .text(v_label)
+//        .attr("style", "cursor:default; fill:grey; text-anchor:middle");
+//    if (p_sub != undefined) {
+//        draw_sup_sub(m_svg_mom, undefined, p_sub);
+//    }
+//}
 
 function draw_reaction_moment(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_dir, p_sub) {
+    // draw force
+    var pnt_frc = p_d3.selectAll("g." + p_class).data(p_loads).join("g").classed(p_class, true) // set group for arrow
+        .attr("transform", load => "translate(" + [load.x, load.y] + ") rotate(" + load.ang + ")"); // translate and then rotate
+    pnt_frc.selectAll("line").data(load => [load]).join("line") // line
+        .attr("x1", 0).attr("y1", 0)
+        .attr("x2", 0).attr("y2", d => -d.mg)
+        .attr("style", d => (d.drag == true) ? "stroke-width:1; stroke:#ff6f6f" : "stroke-width:1; stroke:dimgrey");
+    pnt_frc.selectAll("polygon").data(load => [load]).join("polygon") // triangle
+        .attr("points", tri_str)
+        .attr("style", d => (d.drag == true) ? "cursor:pointer; fill:#ff6f6f; stroke-width:3; stroke:#ff6f6f" : "fill:dimgrey; stroke-width:1; stroke:dimgrey");
+    pnt_frc.selectAll("text").data(load => [load]).join("text") // magnitude
+        .attr("transform", d => "translate(0, " + -(d.mg + 10) + ") rotate(" + -d.ang + ")") // translate and then rotate the object and axes
+        .attr("dominant-baseline", "central")
+        .attr("x", 0).attr("y", 0)
+        .html(d => d.label)
+        .attr("style", "cursor:default; fill:grey; text-anchor:middle");
+    //.attr("id", "load_magnitude");
+
+    // set drag callback function
+    pnt_frc.selectAll("polygon").attr("id", load => load.id).call(d3.drag()
+        .container(p_d3.node().parentNode) // make beam the coordinate system of dragging point
+        .on("start", drag_load_started)
+        .on("drag", drag_load_ing)
+        .on("end", drag_load_ended)
+    );
+}
+
+function draw_reaction_moment(p_d3, p_org_x, p_org_y, p_ang, p_load, p_dir, p_sub) {
     // variables for loc, size
     var mnt_rad = 20;
     var v_label = "M";
@@ -451,7 +630,7 @@ function draw_reaction_moment(p_svg_mom, p_org_x, p_org_y, p_ang, p_load, p_dir,
     }
 
     // draw moment
-    var pnt_mnt = p_svg_mom.append("g") // set group for arrow
+    var pnt_mnt = p_d3.append("g") // set group for arrow
         .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")"); // translate and then rotate
     var arrow = pnt_mnt.append("polygon") // arrow
         .attr("points", tri_str)
@@ -540,18 +719,27 @@ function draw_dimensions(p_svg_mom, p_org_x, p_org_y, p_ang, p_id, p_dims, p_mar
 //    }
 //}
 
-function draw_label(p_svg_mom, p_org_x, p_org_y, p_ang, p_offset, p_offset_ang, p_label, p_anchor) {
-    // text location
-    var ang_rad = p_offset_ang * (Math.PI / 180);
-    var offset_x = Math.cos(ang_rad) * p_offset, offset_y = Math.sin(ang_rad) * p_offset; // p_margin + 14; // font-size=10, spacing = 4
+//function draw_label(p_svg_mom, p_org_x, p_org_y, p_ang, p_offset, p_offset_ang, p_label, p_anchor) {
+//    // text location
+//    var ang_rad = p_offset_ang * (Math.PI / 180);
+//    var offset_x = Math.cos(ang_rad) * p_offset, offset_y = Math.sin(ang_rad) * p_offset; // p_margin + 14; // font-size=10, spacing = 4
 
-    // label
-    var label = p_svg_mom.append("text")
-        .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")") // translate and then rotate the object and axes
-        .attr("x", offset_x).attr("y", offset_y + 5) // the origin is (0, 0)
-        .text(p_label)
-        .attr("style", "cursor:default; fill:grey; text-anchor:" + p_anchor); // p_anchor = start/middle/end
-}
+//    // label
+//    var label = p_svg_mom.append("text")
+//        .attr("transform", "translate(" + p_org_x + "," + p_org_y + ") rotate(" + p_ang + ")") // translate and then rotate the object and axes
+//        .attr("x", offset_x).attr("y", offset_y + 5) // the origin is (0, 0)
+//        .text(p_label)
+//        .attr("style", "cursor:default; fill:grey; text-anchor:" + p_anchor); // p_anchor = start/middle/end
+//}
+//function draw_labels(p_svg_mom, p_data, p_class) {
+//    console.log("draw_labels was called!", p_svg_mom, p_svg_mom.selectAll("text"));
+//    p_svg_mom.selectAll(p_class).data(p_data).join("text")
+//        .attr("transform", d => "translate(" + d.x + "," + d.y + ") rotate(" + d.ang + ")") // translate and then rotate the object and axes
+//        .attr("x", d => Math.cos(d.offset_ang * (Math.PI / 180)) * d.offset)
+//        .attr("y", d => Math.sin(d.offset_ang * (Math.PI / 180)) * d.offset + 5) // the origin is (0, 0)
+//        .text(d => d.label)
+//        .attr("style", d => "cursor:default; fill:grey; text-anchor:" + d.anchor); // d.anchor = start/middle/end
+//}
 //////function draw_label(p_svg_mom, p_org_x, p_org_y, p_ang, p_offset, p_offset_ang, p_label, p_sub, p_anchor, p_id) {
 //////    // text location, not text rotation
 //////    var ang_rad = p_offset_ang * (Math.PI / 180);
@@ -573,6 +761,14 @@ function draw_label(p_svg_mom, p_org_x, p_org_y, p_ang, p_offset, p_offset_ang, 
 //////        label.on("click", click_load_magnitude);
 //////    }
 //////}
+function draw_labels(p_d3, p_labels) { // undefined = subscript
+    p_d3.selectAll("text.label").data(p_labels).join("text").classed("label", true)
+        .attr("transform", d => "translate(" + d.x + "," + d.y + ") rotate(" + d.ang + ")") // translate and then rotate the object and axes
+        .attr("x", d => Math.cos(d.offset_ang * (Math.PI / 180)) * d.offset)
+        .attr("y", d => Math.sin(d.offset_ang * (Math.PI / 180)) * d.offset + 5) // the origin is (0, 0)
+        .text(d => d.label)
+        .attr("style", d => "cursor:default; fill:grey; text-anchor:" + d.anchor); // d.anchor = start/middle/end
+}
 
 function draw_sup_sub(p_svg_mom, p_sup, p_sub) {
     if (p_sup != undefined) { // superscript
@@ -592,6 +788,56 @@ function draw_sup_sub(p_svg_mom, p_sup, p_sub) {
 function set_cable_style(p_idx, p_ref_idx) {
     if (p_idx < p_ref_idx) return "stroke:dimgrey; stroke-linejoin:round; stroke-linecap:round; stroke-width:" + gv_ele_unit / 4;
     else return "stroke:lightgrey; stroke-linejoin:round; stroke-linecap:round; stroke-width:" + (gv_ele_unit / 4 - 1);
+}
+
+function draw_angle_arc_360(p_d3, p_org_x, p_org_y, p_ini_ng, p_cur_ng, p_radius, p_line_width, p_target, p_id) {
+    if (Math.abs(p_cur_ng - p_ini_ng) < 2) return; // within 2 degree, do nothing
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // 0 <= p_s_ng and p_e_ng <= 360
+    // scaler; d3.arc = cw from +y; Mohr's circle = ccw from +x
+    ////////////////////////////////////////////////////////////////////////////////
+    var factor = Math.PI / 180;
+    var scale = d3.scaleLinear().domain([360 * factor, 0 * factor]).range([90 * factor, -270 * factor]);
+
+    // make arc
+    var s_ng = Math.min(p_ini_ng, p_cur_ng) * factor, e_ng = Math.max(p_ini_ng, p_cur_ng) * factor;
+    if (Math.abs(p_cur_ng - p_ini_ng) > 180) e_ng -= 2 * Math.PI; // if difference of angle > 180, draw the opposite angle
+    var arc = d3.arc()
+        .innerRadius(0).outerRadius(p_radius)
+        .startAngle(scale(s_ng))
+        .endAngle(scale(e_ng));
+
+    // draw arc; angle from p_ini_ng to p_cur_ng
+    //var ang = p_cur_ng - p_ini_ng; // in degree
+    //if (ang >= 0)
+    //    if (ang <= 180) ang = ang; // ccw
+    //    else ang = ang - 360; // cw
+    //else
+    //    if (ang >= -180) ang = ang; // cw
+    //    else ang = ang + 360; // ccw
+    var ang = p_cur_ng - p_ini_ng; // in degree
+    if (Math.abs(ang) > 180) ang = ang + ((ang > 0) ? -360 : 360); // in ccw => +, in cw => -
+    p_d3.selectAll((p_id == undefined) ? ".arc" : "#" + p_id).data([0]).join("path").classed("arc", true).attr("id", (p_id == undefined) ? null : p_id)//.lower()
+        .attr("transform", "translate(" + [p_org_x, p_org_y] + ")")
+        .attr("d", arc)
+        .attr("style", "opacity:0.5; stroke:grey; fill:#eee; stroke-width:" + p_line_width)
+        .on("mouseover", function () { mouse_enter(p_target, ang); })
+        .on("mouseout", mouse_out);
+}
+
+// default drag_ended
+function drag_ended() {
+    // hide tooltip
+    g_tooltip.transition().duration(500).style("opacity", 0);
+    g_tooltip = undefined;
+}
+
+// default mouse_out
+function mouse_out() {
+    // hide tooltip
+    g_tooltip.transition().duration(500).style("opacity", 0);
+    g_tooltip.undefined;
 }
 
 function get_transformation(transform) {

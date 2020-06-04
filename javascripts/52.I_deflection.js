@@ -14,7 +14,7 @@ $(document).ready(function () {
 
     // draw section and problem
     draw_section();
-    draw_problem();
+    draw_beam_problem();
     draw_measurement();
 });
 
@@ -24,6 +24,7 @@ function initialize_svg() {
 
     var sx = g_bg_sz[0] / 2, sy = gv_ele_unit;
     $("#section_svg, #prob_svg, #deflection_svg").empty();
+    append_hatching_pattern("#prob_svg"); // prepare hatching pattern
     g_section = d3.select("#section_svg").append("g") // set svg group
         .attr("transform", "translate(150, 200)");
     g_structure = d3.select("#prob_svg").append("g") // set svg group

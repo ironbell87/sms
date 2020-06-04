@@ -104,7 +104,7 @@ function drag_point_ing() {
     var ini_vec = create_vector(create_point(g_Mohr.cx, 0), create_point(g_setting.sx, g_setting.t));
     if (g_point_id == 2) ini_vec = create_vector(create_point(g_Mohr.cx, 0), create_point(g_setting.sy, -g_setting.t));
     var ini_ng = get_angle_360(ini_vec.df), cur_ng = get_angle_360(cur_vec.df);
-    draw_angle_arc_360("Mohr_theta", ini_ng, cur_ng);
+    draw_angle_arc_360(g_structure, g_Mohr.cx, 0, ini_ng, cur_ng, 50 / g_svg_unit, 1 / g_svg_unit, "Mohr_theta");
 
     // draw new stress state
     draw_stress_state(pnts, ini_ng, cur_ng);
@@ -172,6 +172,12 @@ function mouse_out() {
 }
 
 function draw_Mohrs_circle() {
+    // in case of invalid input
+    if (Math.abs(g_Mohr.r) <= Number.EPSILON) {
+        alert("Input values are invalid! Try for another input values")
+        return;
+    }
+
     // draw axes
     draw_axes();
 
@@ -261,44 +267,6 @@ function draw_stress_point(p_pnts, p_cls_name, p_drag) {
         .on("mouseout", mouse_out);
 }
 
-function draw_angle_arc_360(p_target, p_ini_ng, p_cur_ng) {
-    if (Math.abs(p_cur_ng - p_ini_ng) < 2) return; // within 2 degree, do nothing
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // 0 <= p_s_ng and p_e_ng <= 360
-    // scaler; d3.arc = cw from +y; Mohr's circle = ccw from +x
-    ////////////////////////////////////////////////////////////////////////////////
-    var factor = Math.PI / 180;
-    var scale = d3.scaleLinear().domain([360 * factor, 0 * factor]).range([90 * factor, -270 * factor]);
-
-    // make arc
-    var s_ng = Math.min(p_ini_ng, p_cur_ng) * factor, e_ng = Math.max(p_ini_ng, p_cur_ng) * factor;
-    if (Math.abs(p_cur_ng - p_ini_ng) > 180) e_ng -= 2 * Math.PI; // if difference of angle > 180, draw the opposite angle
-    var arc = d3.arc()
-        .innerRadius(0).outerRadius(50 / g_svg_unit)
-        .startAngle(scale(s_ng))
-        .endAngle(scale(e_ng));
-
-    // draw arc; angle from p_ini_ng to p_cur_ng
-    //var ang = p_cur_ng - p_ini_ng; // in degree
-    //if (ang >= 0)
-    //    if (ang <= 180) ang = ang; // ccw
-    //    else ang = ang - 360; // cw
-    //else
-    //    if (ang >= -180) ang = ang; // cw
-    //    else ang = ang + 360; // ccw
-    var ang = p_cur_ng - p_ini_ng; // in degree
-    if (Math.abs(ang) > 180) ang = ang + ((ang > 0) ? -360 : 360); // in ccw => +, in cw => -
-    var d3_target = (p_target == "Mohr_theta") ? g_structure : g_reaction;
-    var trans_x = (p_target == "Mohr_theta") ? g_Mohr.cx : 0;
-    d3_target.selectAll(".arc").data([0]).join("path").classed("arc", true)//.lower()
-        .attr("transform", "translate(" + trans_x + ",0)")
-        .attr("d", arc)
-        .attr("style", "opacity:0.5; stroke:grey; fill:#eee; stroke-width:" + 1 / g_svg_unit)
-        .on("mouseover", dia => { mouse_enter(p_target, ang); })
-        .on("mouseout", mouse_out);
-}
-
 function draw_background() {
     // draw axes
     var bg_sz = 160 / g_svg_unit;
@@ -336,7 +304,7 @@ function draw_stress_state(p_pnts, p_ini_ng, p_cur_ng) {
         ang = p_cur_ng - p_ini_ng; // in degree
         if (Math.abs(ang) > 180) ang = ang + ((ang > 0) ? -360 : 360); // in ccw => +, in cw => -
     }
-    draw_angle_arc_360("state_theta", 0, ang / 2);
+    draw_angle_arc_360(g_reaction, 0, 0, 0, ang / 2, 50 / g_svg_unit, 1 / g_svg_unit, "state_theta");
 
     // draw axes
     var bg_sz = 160 / g_svg_unit;

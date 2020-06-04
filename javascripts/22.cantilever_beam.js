@@ -1,5 +1,4 @@
 ﻿var g_span = 600, g_load = 100, g_load_type = "point", g_loc_fr = 300, g_loc_to = 300;
-var g_V_a = 100, g_M_a = 30000, g_H = 0;
 var gv_pre_x, gv_pre_y, gv_pre_load_width; // for dragging
 
 $(document).ready(function () {
@@ -71,8 +70,8 @@ function drag_load_started() {
     gv_pre_load_width = (g_loc_to - g_loc_fr) * gv_ratio_len;
 
     // show tooltip
-    g_tooltip = d3.select("body").append("div")
-        .attr("class", "tooltip")
+    g_tooltip = d3.select("body").selectAll(".tooltip").data([0]).join("div")
+        .classed("tooltip", true)
         .style("left", d3.event.sourceEvent.clientX.toString() + "px")
         .style("top", (d3.event.sourceEvent.clientY + 28).toString() + "px")
         .style("opacity", 0)
@@ -145,68 +144,6 @@ function drag_load_ended() {
     solve_cantilever_beam_problem();
 }
 
-//function check_input_value(p_ld_idx) {
-//    // check span
-//    gv_ratio_len = gv_span / g_span;
-//    if (g_span <= 0) {
-//        alert("Span must be positive! Solve again!");
-//        g_span = Math.abs(g_span);
-//        $(".smt_solve").val("Solve again!");
-//        return false;
-//    }
-
-//    // check load
-//    gv_ratio_load = gv_load / g_load;
-//    if (g_load <= 0) {
-//        alert("Load must be positive! Solve again!");
-//        g_load = Math.abs(g_load);
-//        $(".smt_solve").val("Solve again!");
-//        return false;
-//    }
-
-//    // check location
-//    if (g_loc_fr < 0) {
-//        alert("Location \"from\" must be zero or positive! Solve again!");
-//        g_loc_fr = Math.abs(g_loc_fr);
-//        $(".smt_solve").val("Solve again!");
-//        return false;
-//    }
-//    if (g_loc_to < 0) {
-//        alert("Location \"to\" must be positive! Solve again!");
-//        $(loc_to_id).val(Math.abs(g_loc_to));
-//        $(".smt_solve").val("Solve again!");
-//        return false;
-//    }
-//    if (g_loc_fr > g_loc_to) {
-//        alert("Location \"from\" must be equal to or less than location \"to\"! Solve again!");
-//        g_loc_to = g_loc_fr;
-//        $(".smt_solve").val("Solve again!");
-//        return false;
-//    }
-//    if (g_loc_fr > g_span) {
-//        alert("Location \"from\" must be equal to or less than span! Solve again!");
-//        g_loc_fr = g_span;
-//        g_loc_to = g_span;
-//        $(".smt_solve").val("Solve again!");
-//        return false;
-//    }
-//    if (g_loc_to > g_span) {
-//        alert("Location \"to\" must be equal to or less than span! Solve again!");
-//        g_loc_to = g_span;
-//        $(".smt_solve").val("Solve again!");
-//        return false;
-//    }
-//    //if (g_load_type == "point") {
-//    //    if (g_loc_fr != g_loc_to) {
-//    //        alert("For point load, location \"to\" must be equal to location \"from\"! Solve again!");
-//    //        g_loc_to = g_loc_fr;
-//    //        $(".smt_solve").val("Solve again!");
-//    //        return false;
-//    //    }
-//    //}
-//    return true;
-//}
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // draw beams and frames
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -260,6 +197,9 @@ function draw_cantilever_beam_problem() {
 }
 
 function draw_cantilever_beam_FBD() {
+    // if FBD is not needed
+    if (g_fbd == undefined) return;
+
     // draw free body diagram
     var sx = 100, sy = 100, ang = 0;
     g_fbd = d3.select("#fbd_svg").append("g"); // set svg group
@@ -276,43 +216,13 @@ function solve_cantilever_beam_problem() {
     }
 
     // compute reactions
-    g_H = 0;
-    g_V_a = load;
-    g_M_a = load * dist;
+    var reactions = [0, load, load * dist]; // Ha, Va, Ma
 
-    // object for display of measurement using svg; msmt = measurement
-    var msmt = [{ "label": "H", "sub": "A", "val": (g_H + get_random(-0.1, 0.1)).toFixed(g_digit), "unit": "N" },
-                { "label": "V", "sub": "A", "val": (g_V_a + get_random(-g_V_a * 0.1, g_V_a * 0.1)).toFixed(g_digit), "unit": "N" },
-                { "label": "M", "sub": "A", "val": (g_M_a + get_random(-g_M_a * 0.1, g_M_a * 0.1)).toFixed(g_digit), "unit": "Nmm" }];
-
-    // draw free body diagram
-    var sx = 50, sy = 0, ang = 0;
-    g_reaction = d3.select("#reaction_svg").append("g") // set svg group
-        .attr("transform", "translate(" + sx + ", " + sy + ") scale(1,-1)"); // translate and then flip down the object and axes (+x = right, +y = upward)
-
-    // draw the results
-    var msmt_result_grp = g_reaction.selectAll("g").data(msmt).join("g")
-        .attr("transform", (d, i) => "translate(0, " + (-i * 60 - 50) + ")");
-    msmt_result_grp.append("text")
-        .attr("x", 0).attr("y", 0)
-        //.html(d => "<pre>" + d.label + "             " + d.val + "    " + d.unit + "</pre>")
-        .html(d => d.label)
-        .attr("style", "cursor:default; fill:grey; text-anchor:start") // start/middle/end
-        .attr("transform", "scale(1, -1)")
-        .append("tspan").text(d => d.sub).style("baseline-shift", "sub").style("font-size", "0.8em");
-    msmt_result_grp.append("rect")
-        .attr("x", 50).attr("y", -15)
-        .attr("width", 150).attr("height", 40)
-        .attr("rx", 20).attr("rx", 20)
-        .attr("style", "stroke:grey; stroke-width:0.5; fill:none");
-    msmt_result_grp.append("text")
-        .attr("x", 180).attr("y", 0)
-        .html(d => d.val)
-        .attr("style", "cursor:default; fill:grey; font-weight:bold; text-anchor:end") // start/middle/end
-        .attr("transform", "scale(1, -1)");
-    msmt_result_grp.append("text")
-        .attr("x", 210).attr("y", 0)
-        .html(d => { return d.unit; })
-        .attr("style", "cursor:default; fill:grey; text-anchor:start") // start/middle/end
-        .attr("transform", "scale(1, -1)");
+    // show reactions
+    var inputs = $(".div_setting > input");
+    if (inputs.length > 0) {
+        inputs[0].value = (reactions[0] + get_random(-0.1, 0.1)).toFixed(g_digit);
+        inputs[1].value = (reactions[1] * (1 + get_random(-0.1, 0.1))).toFixed(g_digit);
+        inputs[2].value = (reactions[2] * (1 + get_random(-0.1, 0.1))).toFixed(g_digit);
+    }
 }

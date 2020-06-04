@@ -3,10 +3,19 @@ const g_bg_sz = [700, 700]; // size of svg for problem
 const g_wgt_min = 10, g_wgt_max = 200;
 const g_hg_hgt = 50;
 let g_wgt_num = 7;
-let g_all_wgt_units = [], g_wgt_units = [], g_pins = [], g_cbls = [];
+let g_x0; g_all_wgt_units = [], g_wgt_units = [], g_pins = [], g_cbls = [];
 let g_nxt_wgt_id = 0, g_nxt_cbl_id = 1000;
 
 $(document).ready(function () {
+    // initialize svg
+    initialize_svg();
+
+    // create, solve, and draw
+    create(g_wgt_num + 1);
+    solve();
+    draw();
+
+    // update UI
     $(document).on("input", "#input_N", function () {
         g_wgt_num = parseInt($(this).val());
         $("#label_N").html(g_wgt_num);
@@ -15,14 +24,6 @@ $(document).ready(function () {
         solve();
         draw();
     });
-
-    // initialize svg
-    initialize_svg();
-
-    // create, solve, and draw
-    create(g_wgt_num + 1);
-    solve();
-    draw();
 });
 
 function initialize_svg() {
@@ -37,10 +38,10 @@ function create(p_interval) {
     // coordinates of left, right pin
     var lx = -g_bg_sz[0] / 2 + gv_ele_unit * 1.5, rx = -lx; // left and right
     var ty = g_bg_sz[1] - gv_ele_unit * 1.5, by = gv_ele_unit * 20; // top and bottom
-    var x0 = get_random(lx / 5, rx / 5), y0 = by; // vertex based on random number
+    if (g_x0 == undefined) g_x0 = get_random(lx / 5, rx / 5), y0 = by; // vertex based on random number; must be kept to keep the first and end pin
     var x1 = lx, y1 = ty; // the other point
-    if (x0 < 0) x1 = rx;
-    var a = (y1 - y0) / Math.pow(x1 - x0, 2), b = -2 * a * x0, c = a * x0 * x0 + y0; // the coefficients of quadratic equation based on points of (x0, y0) and (x1, y1)
+    if (g_x0 < 0) x1 = rx;
+    var a = (y1 - y0) / Math.pow(x1 - g_x0, 2), b = -2 * a * g_x0, c = a * g_x0 * g_x0 + y0; // the coefficients of quadratic equation based on points of (g_x0, y0) and (x1, y1)
 
     // create g_wgt_units
     g_all_wgt_units = []; // empty array
@@ -85,7 +86,7 @@ function create(p_interval) {
     // for test !!!
     ////////////////////////////////////////////////////////////////////////////////////
     g_wgt_units = g_all_wgt_units.slice(1, g_all_wgt_units.length - 1); // get all wgt_units except for the first and last element
-    g_pins = [g_all_wgt_units[0], g_all_wgt_units[g_all_wgt_units.length - 1]];
+    g_pins = [g_all_wgt_units[0], last_of(g_all_wgt_units)];
 
     //create g_cbls
     g_cbls = [];

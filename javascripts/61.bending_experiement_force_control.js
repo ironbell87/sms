@@ -2,27 +2,6 @@
 
 $(document).ready(function () {
     // update setting
-    $(document).on("input", "#input_S", function () {
-        var spt_idx = parseInt($(this).val());
-        g_setting.Support = g_support[spt_idx];
-        if (g_setting.Support == g_support[0]) g_loc_fr = g_loc_to = g_span / 2; // in simple beam, load at beam center
-        else g_loc_fr = g_loc_to = g_span; // in cantilever beam, load at beam tip
-        $("#label_S").html(g_setting.Support);
-        g_load = g_setting.P = 3 * g_setting.E * g_setting.I() * g_setting.D / Math.pow(g_setting.L, 3); // set P based on elastic behavior of cantilever
-        if (g_setting.Support == g_support[0]) g_load = g_setting.P = 48 * g_setting.E * g_setting.I() * g_setting.D / Math.pow(g_setting.L, 3); // set P based on elastic behavior of simple beam
-        $("#load_magnitude").text("P");
-        //draw_problem();
-        draw_measurement();
-    });
-    $(document).on("input", "#input_D", function () {
-        g_setting.D = parseFloat($(this).val());
-        $("#label_D").html(g_setting.D.toFixed(g_digit) + " mm");
-        g_load = g_setting.P = 3 * g_setting.E * g_setting.I() * g_setting.D / Math.pow(g_setting.L, 3); // set P based on elastic behavior of cantilever
-        if (g_setting.Support == g_support[0]) g_load = g_setting.P = 48 * g_setting.E * g_setting.I() * g_setting.D / Math.pow(g_setting.L, 3); // set P based on elastic behavior of simple beam
-        $("#load_magnitude").text("P");
-        //draw_problem();
-        draw_measurement();
-    });
     $(document).on("input", "#input_Gauge", function () {
         var gauge_idx = parseInt($(this).val());
         g_setting.Gauge = g_gauge[gauge_idx];
@@ -40,10 +19,7 @@ $(document).ready(function () {
     $("#gauge_sapce").css("height", "140px");
     g_setting.E = 5000.0;
     g_setting.L = g_span = 300.0; g_loc_fr = g_loc_to = 150;
-    g_setting.P = g_load = 0.0;
-    g_setting.D = 0.0;
-    g_setting.h = 35.00;
-    g_setting.Yield = g_setting.E / 20; // in reality, 1000 may be appropriate; but for the purpose of education, 10 is used 
+    g_setting.P = 5000.0;
     g_setting.Gauge = "Show"; // Show / Hide gauge
     g_setting.Layer = 7;
 
@@ -51,7 +27,6 @@ $(document).ready(function () {
     draw_section();
     draw_beam_problem();
     draw_measurement();
-    $("#load_magnitude").text("P");
 });
 
 function draw_measurement() {
@@ -126,7 +101,7 @@ function draw_measurement() {
 
     // draw beam layrs
     var color_scaler = d3.scaleLinear().domain([-1, 1]).range([0, 1]); // scale domain to pixel
-    //var sigma_max = Math.max(get_sigma_max(10000), 0.000001); // 10000 = max of load P
+    var sigma_max = Math.max(get_sigma_max(10000), 0.000001); // 10000 = max of load P
     //g_deflection.selectAll(".beam_layer").data(bm_lyrs).join("line").classed("beam_layer", true)
     //        .attr("x1", lyr => lyr.layer.sp.x).attr("y1", lyr => lyr.layer.sp.y)
     //        .attr("x2", lyr => lyr.layer.ep.x).attr("y2", lyr => lyr.layer.ep.y)
@@ -135,17 +110,9 @@ function draw_measurement() {
     ////    .attr("cx", lyr => lyr.layer.cp.x).attr("cy", lyr => lyr.layer.cp.y)
     ////    .attr("rx", lyr => lyr.layer.mg / 2 - 0.5).attr("ry", g_beam_scaler(inc / 2 - 0.5))
     ////    .attr("style", lyr => "fill:" + d3.interpolateSpectral(color_scaler(lyr.sigma / sigma_max))) //d3.interpolateRdBu.interpolateTurbo.interpolateRdYlBu
-
-    //g_deflection.selectAll(".beam_layer").data(bm_lyrs).join("path").classed("beam_layer", true)
-    //    .attr("style", lyr => "stroke:" + d3.interpolateSpectral(color_scaler(lyr.sigma / sigma_max)) + "; fill:" + d3.interpolateSpectral(color_scaler(lyr.sigma / sigma_max))) //d3.interpolateRdBu.interpolateTurbo.interpolateRdYlBu
-    //    .attr("d", lyr => "M" + lyr.pt.x + "," + lyr.pt.y + "L" + lyr.pb.x + "," + lyr.pb.y + " " + lyr.nb.x + "," + lyr.nb.y + " " + lyr.nt.x + "," + lyr.nt.y + "Z")
-    //    .on("mouseenter", function () { mouse_enter(d3.select(this)); })
-    //    .on("mouseleave", function () { mouse_leave(d3.select(this)); });
-    var sigma_max = g_setting.Yield; //Math.max(get_sigma_max(10000), 0.000001); // 10000 = max of load P
     g_deflection.selectAll(".beam_layer").data(bm_lyrs).join("path").classed("beam_layer", true)
-        .style("stroke", lyr => d3.interpolateSpectral(color_scaler(lyr.sigma / sigma_max)))
-        .style("fill", lyr => (Math.abs(lyr.sigma) > g_setting.Yield) ? "#444" : d3.interpolateSpectral(color_scaler(lyr.sigma / sigma_max))) //d3.interpolateRdBu.interpolateTurbo.interpolateRdYlBu
-        .attr("d", lyr => "M" + lyr.pt.x + "," + lyr.pt.y + "L" + lyr.pb.x + "," + lyr.pb.y + " " + lyr.nb.x + "," + lyr.nb.y + " " + lyr.nt.x + "," + lyr.nt.y + "Z")
+        .attr("style", lyr => "stroke:" + d3.interpolateSpectral(color_scaler(lyr.sigma / sigma_max)) + "; fill:" + d3.interpolateSpectral(color_scaler(lyr.sigma / sigma_max))) //d3.interpolateRdBu.interpolateTurbo.interpolateRdYlBu
+        .attr("d", lyr => "M" + lyr.pt.x +"," + lyr.pt.y + "L" + lyr.pb.x + "," + lyr.pb.y + " " + lyr.nb.x + "," + lyr.nb.y + " " + lyr.nt.x + "," + lyr.nt.y + "Z")
         .on("mouseenter", function () { mouse_enter(d3.select(this)); })
         .on("mouseleave", function () { mouse_leave(d3.select(this)); });
 
@@ -154,11 +121,11 @@ function draw_measurement() {
 }
 
 //function create_beam_layer(p_xx, p_y, p_lyr) {
-//return {
-//    xx: p_xx, y: p_y,
-//    layer: p_lyr,
-//    sigma: get_sigma(p_xx, p_y)
-//};
+    //return {
+    //    xx: p_xx, y: p_y,
+    //    layer: p_lyr,
+    //    sigma: get_sigma(p_xx, p_y)
+    //};
 //}
 function create_beam_layer(p_ref, p_pt, p_pb, p_nt, p_nb) {
     return {
@@ -206,14 +173,13 @@ function mouse_enter(p_d3) {
     p_d3.clone(true).raise().attr("id", "zoomed")
         .style("stroke", "purple").style("stroke-width", "0.5").style("opacity", .7)
         .attr("transform", "translate(" + -lyr.cnt.x * (scale_rto - 1) + "," + -lyr.cnt.y * (scale_rto - 1) + ") scale(" + scale_rto + "," + scale_rto + ")");
-    //.attr("transform", "translate(" + -lyr.ref.x * (scale_rto - 1) + "," + -lyr.ref.y * (scale_rto - 1) + ")");
-    //.attr("transform", "scale(" + scale_rto + "," + scale_rto + ") translate(" + lyr.ref.x * (scale_rto - 0) + "," + lyr.ref.y * (scale_rto - 0) + ")");
+        //.attr("transform", "translate(" + -lyr.ref.x * (scale_rto - 1) + "," + -lyr.ref.y * (scale_rto - 1) + ")");
+        //.attr("transform", "scale(" + scale_rto + "," + scale_rto + ") translate(" + lyr.ref.x * (scale_rto - 0) + "," + lyr.ref.y * (scale_rto - 0) + ")");
 
     // show tooltip
     var err_max = lyr.sigma * 0.025; // +-2.5%
     var err = get_random(-err_max, err_max);
-    //var tooltip_text = "σ = " + (lyr.sigma + err).toFixed(g_digit) + " MPa<br />at (" + (lyr.ref.x).toFixed(g_digit) + ", " + (-lyr.ref.y).toFixed(g_digit) + ")";
-    var tooltip_text = "ε = " + ((lyr.sigma + err) / g_setting.E * 1000).toFixed(g_digit * 2) + " x10<sup_white>-3</sup_white><br />at (" + (lyr.ref.x).toFixed(g_digit) + ", " + (-lyr.ref.y).toFixed(g_digit) + ")";
+    var tooltip_text = "σ = " + (lyr.sigma + err).toFixed(g_digit) + " MPa<br />at (" + (lyr.ref.x).toFixed(g_digit) + ", " + (-lyr.ref.y).toFixed(g_digit) + ")";
     g_tooltip = d3.select("body").selectAll(".tooltip").data([0]).join("div")
         .classed("tooltip", true)
         .style("left", (d3.event.pageX - 70).toString() + "px")

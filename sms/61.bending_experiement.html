@@ -7,8 +7,7 @@
     <script type="text/javascript" src="../javascripts/jquery-1.10.2.js"></script>
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script type="text/javascript" src="../javascripts/00.svg_basics.js"></script>
-    <script type="text/javascript" src="../javascripts/21.simple_beam.js"></script>
-    <script type="text/javascript" src="../javascripts/22.cantilever_beam.js"></script>
+    <script type="text/javascript" src="../javascripts/21.reaction_beam.js"></script>
     <script type="text/javascript" src="../javascripts/42.bending.js"></script>
     <script type="text/javascript" src="../javascripts/61.bending_experiement.js"></script>
     <link rel="stylesheet" type="text/css" media="screen" href="../stylesheets/main.css">
@@ -35,17 +34,17 @@
                     <div id="prob_space">
                         <div id="setting_space">
                             <label>Support type =&nbsp;</label><label id="label_S">Simple support</label>
-                            <input id="input_S" type="range" min="0" max="1" step="0" value="0">
+                            <input id="input_S" type="range" min="0" max="1" step="1" value="0">
                             <label>Elastic modulus E =&nbsp;</label><label id="label_E">5000.00 MPa</label>
-                            <input id="input_E" type="range" min="3000" max="7000" step="100" value="5000">
+                            <input id="input_E" type="range" min="5000" max="5000" step="0" value="5000">
                             <label>Length L =&nbsp;</label><label id="label_L">300.00 mm</label>
-                            <input id="input_L" type="range" min="250" max="500" step="10" value="300">
-                            <label>Load P =&nbsp;</label><label id="label_P">5000.00 N</label>
-                            <input id="input_P" type="range" min="0" max="10000" step="10" value="5000">
+                            <input id="input_L" type="range" min="300" max="300" step="0" value="300">
+                            <label>Displacement D =&nbsp;</label><label id="label_D">0.00 mm</label>
+                            <input id="input_D" type="range" min="0" max="200" step="0.5" value="0">
                             <label>Width of section b =&nbsp;</label><label id="label_b">30.00 mm</label>
-                            <input id="input_b" type="range" min="20" max="40" step="5" value="30">
-                            <label>Depth of section h =&nbsp;</label><label id="label_h">50.00 mm</label>
-                            <input id="input_h" type="range" min="30" max="60" step="5" value="50">
+                            <input id="input_b" type="range" min="30" max="30" step="0" value="30">
+                            <label>Depth of section h =&nbsp;</label><label id="label_h">35.00 mm</label>
+                            <input id="input_h" type="range" min="35" max="35" step="0" value="50">
                         </div>
                         <div id="section_space">
                             <svg id="section_svg" width="100%" height="100%">

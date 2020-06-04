@@ -1,7 +1,7 @@
 ﻿// wgt = weight = pendulum, mbl = mobile, hg = hanger
-const g_bg_sz = [700, 470]; // size of svg for problem
+const g_bg_sz = [700, 660]; // size of svg for problem
 const g_wgt_min = 10, g_wgt_max = 200;
-const g_bar_len = 210, g_bar_hgt = 10, g_hg_hgt = 50, g_long_hg_hgt = g_hg_hgt * 3;
+const g_bar_len = 210, g_bar_hgt = 10, g_hg_hgt = 50, g_mid_hg_hgt = g_hg_hgt * 2.5, g_long_hg_hgt = g_hg_hgt * 5;
 const g_mbl_hgt = g_bar_hgt + g_hg_hgt + Math.sqrt(g_wgt_max) * 2; // 200^(1/3) ~= 5.85, 200^(1/2) = 14.14
 let g_nxt_wgt_id = 0, g_nxt_mbl_id = 1000;
 let g_wgt_map = new Map(), g_mbl_map = new Map();
@@ -9,6 +9,14 @@ let minus_bar_color = d3.scaleLinear().domain([-1, 0]).range(["MediumVioletRed",
 let plus_bar_color = d3.scaleLinear().domain([0, 1]).range(["White", "RoyalBlue"]);
 
 $(document).ready(function () {
+    // initialize svg
+    initialize_svg();
+
+    // draw cables, g_pins and pendulum
+    draw_mbl(g_structure, g_mbl_map.get(1000)); // draw from mom(1000) mbl to children, grand children, ...
+});
+
+function initialize_svg() {
     // initialize svg
     gv_ratio_len = 1.0;
     $("#prob_svg").empty();
@@ -21,7 +29,7 @@ $(document).ready(function () {
 
     // lv1(child) mobiles
     sy -= g_hg_hgt;
-    var lv1_lft_id = create_mbl(4, 0, 0, g_long_hg_hgt); // left child
+    var lv1_lft_id = create_mbl(4, 0, 0, g_mid_hg_hgt); // left child
     hang_mbl(lv0_id, lv1_lft_id, 0); // hang chd_id to 1st wgt
     var lv1_rgt_id = create_mbl(3 + get_randomi(1), 0, 0, g_long_hg_hgt); // right child
     hang_mbl(lv0_id, lv1_rgt_id, 3 + get_randomi(1)); // hang chd_id to nth wgt
@@ -32,19 +40,7 @@ $(document).ready(function () {
     hang_mbl(lv1_lft_id, lv2_lft_id, get_randomi(3)); // hang chd_id to nth wgt
     var lv2_rgt_id = create_mbl(4, 0, 0, g_long_hg_hgt); // right child
     hang_mbl(lv1_rgt_id, lv2_rgt_id, get_randomi(2)); // hang chd_id to 4th wgt
-
-    // draw cables, g_pins and pendulum
-    draw_mbl(g_structure, g_mbl_map.get(1000)); // draw from mom(1000) mbl to children, grand children, ...
-
-    $(".smt_measurement").click(function () {
-        //var result = [];
-        //g_mbl_map.forEach(function (mbl) {
-        //    result.push(mbl.eq_dist);
-        //});
-        //console.log(g_mbl_map, g_wgt_map, result);
-        location.reload();
-    });
-});
+}
 
 function create_mbl(p_num_wgt, p_ox, p_oy, p_hg_hgt) {
     // adjust input
@@ -214,12 +210,6 @@ function mouse_enter(p_tgt_type, p_fx, p_fy, p_x, p_y) {
     g_tooltip
         .transition().duration(500)
         .style("opacity", .8);
-}
-
-function mouse_out() {
-    // hide tooltip
-    g_tooltip.transition().duration(500).style("opacity", 0);
-    g_tooltip = undefined;
 }
 
 function find_wgt_by_mbl_id(p_mom_mbl, p_chd_mbl_id) {

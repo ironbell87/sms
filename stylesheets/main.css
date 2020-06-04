@@ -49,6 +49,16 @@ sup {
     vertical-align: super;
     font-size: smaller;
 }
+sup_white {
+    color: white;
+    vertical-align: super;
+    font-size: smaller;
+}
+
+sub {
+    vertical-align: sub;
+    font-size: smaller;
+}
 
 .separator {
     left: 0px;
