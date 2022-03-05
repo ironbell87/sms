@@ -1000,7 +1000,7 @@ function create_vector(p_s, p_e) {
         cp: create_point((p_s.x + p_e.x) / 2, (p_s.y + p_e.y) / 2),
         df: delta, mg: mag,
         uv: unit_vec,
-        ng: atand(unit_vec.y / unit_vec.x) // angle
+        ng: atand(unit_vec.y / unit_vec.x) + (unit_vec.x >= 0 ? 0 : 180) // angle
     };
 
     //return {

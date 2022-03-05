@@ -143,7 +143,8 @@ function draw_measurement() {
     //    .on("mouseleave", function () { mouse_leave(d3.select(this)); });
     var sigma_max = g_setting.Yield; //Math.max(get_sigma_max(10000), 0.000001); // 10000 = max of load P
     g_deflection.selectAll(".beam_layer").data(bm_lyrs).join("path").classed("beam_layer", true)
-        .style("stroke", lyr => d3.interpolateSpectral(color_scaler(lyr.sigma / sigma_max)))
+        .attr("style", "stroke-width:0.5; stroke:lightgrey")
+        //.style("stroke", lyr => d3.interpolateSpectral(color_scaler(lyr.sigma / sigma_max)))
         .style("fill", lyr => (Math.abs(lyr.sigma) > g_setting.Yield) ? "#444" : d3.interpolateSpectral(color_scaler(lyr.sigma / sigma_max))) //d3.interpolateRdBu.interpolateTurbo.interpolateRdYlBu
         .attr("d", lyr => "M" + lyr.pt.x + "," + lyr.pt.y + "L" + lyr.pb.x + "," + lyr.pb.y + " " + lyr.nb.x + "," + lyr.nb.y + " " + lyr.nt.x + "," + lyr.nt.y + "Z")
         .on("mouseenter", function () { mouse_enter(d3.select(this)); })

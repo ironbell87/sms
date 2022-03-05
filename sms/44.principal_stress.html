@@ -1,0 +1,78 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <script type="text/javascript" src="../javascripts/jquery-1.10.2.js"></script>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script type="text/javascript" src="../javascripts/00.svg_basics.js"></script>
+    <script type="text/javascript" src="../javascripts/21.reaction_beam.js"></script>
+    <script type="text/javascript" src="../javascripts/42.bending.js"></script>
+    <script type="text/javascript" src="../javascripts/44.principal_stress.js"></script>
+    <link rel="stylesheet" type="text/css" media="screen" href="../stylesheets/main.css">
+    <link rel="shortcut icon" href="https://ironbell87.github.io/structural_mechanics_II/images/ironbell_icon.png">
+    <title>The principal stress of a beam</title>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="header_space">
+        <a class="header_logo" href="https://ironbell87.github.io/sms"></a>
+        <a class="header_title">The principal stress of a beam</a>
+        <a class="header_email" href="mailto:ironbell@kyungnam.ac.kr">by @ironbell</a>
+        <a class="header_other" href="https://trianglify.io">inspired by Trianglify.io</a>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="outer_space">
+        <div id="inner_space">
+            <div id="contents_space">
+                <br />
+                <div id="input_space">
+                    <p style="text-align: left; cursor: default">1. Simulation setting</p>
+                    <div id="prob_space">
+                        <div id="setting_space">
+                            <label>Support type =&nbsp;</label><label id="label_S">Simple support</label>
+                            <input id="input_S" type="range" min="0" max="1" step="1" value="0">
+                            <label>Elastic modulus E =&nbsp;</label><label id="label_E">5000.00 MPa</label>
+                            <input id="input_E" type="range" min="5000" max="5000" step="0" value="5000">
+                            <label>Length L =&nbsp;</label><label id="label_L">360.00 mm</label>
+                            <input id="input_L" type="range" min="240" max="480" step="10" value="360">
+                            <label>Load P =&nbsp;</label><label id="label_P">20000.00 N</label>
+                            <input id="input_P" type="range" min="0" max="40000" step="500" value="20000">
+                            <label>Width of section b =&nbsp;</label><label id="label_b">25.00 mm</label>
+                            <input id="input_b" type="range" min="20" max="30" step="1" value="25">
+                            <label>Depth of section h =&nbsp;</label><label id="label_h">50.00 mm</label>
+                            <input id="input_h" type="range" min="40" max="60" step="1" value="50">
+                        </div>
+                        <div id="section_space">
+                            <svg id="section_svg" width="100%" height="100%">
+                                Sorry, your browser does not support inline SVG.
+                            </svg>
+                        </div>
+                        <svg id="prob_svg" width="700px" height="250px">
+                            Sorry, your browser does not support inline SVG.
+                        </svg>
+                    </div>
+                </div>
+                <div id="output_space">
+                    <p style="text-align: left; cursor: default">2. Measurement</p>
+                    <div id="reaction_space">
+                        <div id="gauge_sapce">
+                            <label>Number of layers =&nbsp;</label><label id="label_Layer">10</label>
+                            <input id="input_Layer" type="range" min="3" max="15" step="1" value="10">
+                            <label>Target =&nbsp;</label><label id="label_Target">σ<sub>x</sub> (bending stress)</label>
+                            <input id="input_Target" type="range" min="0" max="1" step="0" value="0">
+                        </div>
+                        <svg id="deflection_svg" width="700px" height="400px">
+                            Sorry, your browser does not support inline SVG.
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

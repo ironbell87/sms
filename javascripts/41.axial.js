@@ -1,9 +1,9 @@
 ﻿// cbl = cable, wgt = weight = pendulum
 const g_bg_sz = [700, 1000]; // size of svg for problem
 const g_mat = [["A", "B", "C", "D", "E"],
-               [2200, 3150, 4660, 5219, 6000]];
+[2200, 3150, 4660, 5219, 6000]];
 let g_setting = { A: 3.0, L: 60.0, P: 500.0, E: 2200.0 };
-let g_scaler;
+let g_scaler, g_pre_len = 0;
 
 $(document).ready(function () {
     // update sectional area
@@ -51,38 +51,33 @@ function draw_setting() {
     var sp = { x: 0, y: 0 }, ep = { x: 0, y: g_scaler(g_setting.L) }; // length
     var dia = Math.sqrt(g_scaler(g_setting.A)); // diameter
     var wgt = Math.sqrt(g_scaler(g_setting.P)); // tension
-    var dot_radius = gv_ele_unit / 6;
     var dt = g_setting.P * g_setting.L / (g_setting.E * g_setting.A); // axial displacement
     var delta = g_scaler(dt + get_random(-dt * 0.05, dt * 0.05));
 
     // draw cbl
     g_structure.selectAll(".cbl").data([g_setting]).join("rect").classed("cbl", true)
         .attr("x", -dia / 2).attr("y", 0)
-        .attr("width", dia).attr("height", ep.y)
-        .attr("style", "fill:lightgrey; stroke:dimgrey");
-    //var defs = g_structure.append("defs");
-    //var filter = defs.append("filter")
-    //    .attr("id", "svg_blur").attr("width", "250%");
-    //filter.append("feGaussianBlur")
-    //    .attr("in", "SourceAlpha").attr("stdDeviation", 15);
-    g_structure.selectAll(".delta").data([g_setting]).join("rect").classed("delta", true)
-        //.attr("transform", cbl => "translate(" + cbl.seg.sp.x + ", " + cbl.seg.sp.y + ") rotate(" + cbl.seg.ng + ")") // do not know why "rotate and then translate" does not work!!
-        .attr("x", -dia / 2).attr("y", ep.y)
-        .attr("width", dia).attr("height", delta)
-        //.attr("style", "fill:#ff6f6f; stroke:red; filter:'url(#svg_blur)'");
-        .attr("style", "fill:#ff6f6f; stroke:red;");
+        .attr("width", dia).attr("height", g_pre_len)
+        .attr("style", "fill:lightgrey; stroke:dimgrey")
+        .transition().ease(d3.easeElastic)
+        .duration(1000)
+        .attr("height", ep.y + delta);
 
     // draw pin (support)
-    g_structure.selectAll(".pin").data([g_setting]).join("circle") // pin for support
-        .classed("pin", true)
+    g_structure.selectAll(".pin").data([g_setting]).join("circle").classed("pin", true) // pin for support
         .attr("cx", 0).attr("cy", 0)
         .attr("r", gv_ele_unit / 2)
         .attr("style", "fill:lightgrey; stroke-width:2; stroke:dimgrey");
 
     // draw wgt
-    g_structure.selectAll(".wgt").data([wgt]).join("rect")
-        .classed("wgt", true)
-        .attr("x", -wgt / 2).attr("y", ep.y + delta)
+    g_structure.selectAll(".wgt").data([wgt]).join("rect").classed("wgt", true)
+        .attr("x", -wgt / 2).attr("y", g_pre_len)
         .attr("width", wgt).attr("height", wgt)
-        .attr("style", "fill:lightgrey; stroke:dimgrey; opacity:0.7");
+        .attr("style", "fill:lightgrey; stroke:dimgrey; opacity:0.7")
+        .transition().ease(d3.easeElastic)
+        .duration(1000)
+        .attr("y", ep.y + delta);
+
+    // update previous cable length
+    g_pre_len = ep.y + delta;
 }

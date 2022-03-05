@@ -59,6 +59,11 @@ sub {
     vertical-align: sub;
     font-size: smaller;
 }
+sub_white {
+    color: white;
+    vertical-align: sub;
+    font-size: smaller;
+}
 
 .separator {
     left: 0px;

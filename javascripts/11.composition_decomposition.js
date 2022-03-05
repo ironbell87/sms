@@ -263,15 +263,14 @@ const g_or = 100; // offset_radius
 const g_bg_sz = [700, 700]; // size of svg for problem
 const g_bg_nsz = [g_bg_sz[0] - gv_ele_unit * 4, g_bg_sz[1] - gv_ele_unit * 4]; // net size of svg for problem
 const g_pendulum_len = 50;
-let g_xy; // 3x2; 3 = left, right, center; 2 = x, y
+let g_lpnt, g_rpnt, g_cpnt, g_npnt;
 
 $(document).ready(function () {
     // initialize the location of g_pins (supports)
-    var lpnt = create_point(-g_bg_nsz[0] / 2, +g_bg_nsz[1] / 2 - get_random(0, g_or)); // left
-    var rpnt = create_point(+g_bg_nsz[0] / 2, +g_bg_nsz[1] / 2 - get_random(0, g_or)); // right
-    var cpnt = create_point((lpnt.x + rpnt.x) / 2.0, (lpnt.y + rpnt.y) / 2.0 - get_random(0, g_or) * 3); // center
-    var ppnt = create_point(cpnt.x, cpnt.y - g_pendulum_len); // pendulum
-    g_xy = [create_vector(lpnt, cpnt), create_vector(cpnt, rpnt), create_vector(cpnt, ppnt)]; // left, right, center
+    g_lpnt = create_point(-g_bg_nsz[0] / 2, +g_bg_nsz[1] / 2 - get_random(0, g_or)); // left
+    g_rpnt = create_point(+g_bg_nsz[0] / 2, +g_bg_nsz[1] / 2 - get_random(0, g_or)); // right
+    g_npnt = create_point((g_lpnt.x + g_rpnt.x) / 2.0, (g_lpnt.y + g_rpnt.y) / 2.0 - get_random(0, g_or) * 3); // new point; be careful not to change the value of cpnt // new point; be careful not to change the value of cpnt
+    g_cpnt = create_point(g_npnt.x, g_npnt.y - 10); // center; old
 
     // initialize svg
     initialize_svg();
@@ -300,9 +299,8 @@ function initialize_svg() {
 }
 
 function drag_pendulum_started() {
-    // show tooltip
+/*    // show tooltip
     g_tooltip = d3.select("body").selectAll(".tooltip").data([0]).join("div").classed("tooltip", true)
-        .attr("class", "tooltip")
         .style("left", (d3.event.sourceEvent.clientX + 40).toString() + "px")
         .style("top", (d3.event.sourceEvent.clientY - 10).toString() + "px")
         .style("opacity", 0)
@@ -310,7 +308,7 @@ function drag_pendulum_started() {
     g_tooltip
         .transition().duration(500)
         .style("opacity", .8);
-}
+*/}
 
 function drag_pendulum_ing() {
     // new x and y
@@ -318,99 +316,108 @@ function drag_pendulum_ing() {
     var new_y = d3.event.y;
 
     // limit of range of new x
-    new_x = Math.max(new_x, g_xy[0].sp.x + gv_ele_unit * 2);
-    new_x = Math.min(new_x, g_xy[1].ep.x - gv_ele_unit * 2);
+    new_x = Math.max(new_x, g_lpnt.x + gv_ele_unit * 2);
+    new_x = Math.min(new_x, g_rpnt.x - gv_ele_unit * 2);
 
     // limit of range of new y
-    var dx = g_xy[1].ep.x - g_xy[0].sp.x;
-    var dy = g_xy[1].ep.y - g_xy[0].sp.y;
-    var cx = new_x - g_xy[0].sp.x;
-    var cy = cx * (dy / dx) + g_xy[0].sp.y;
-    new_y = Math.min(new_y, (cy - g_pendulum_len));
-    new_y = Math.max(new_y, (-g_bg_nsz[1] / 2 + gv_ele_unit));
+    var dx = g_rpnt.x - g_lpnt.x;
+    var dy = g_rpnt.y - g_lpnt.y;
+    var cx = new_x - g_lpnt.x;
+    var cy = cx * (dy / dx) + g_lpnt.y;
+    new_y = Math.min(new_y, cy);
+    new_y = Math.max(new_y, (-g_bg_nsz[1] / 2 + gv_ele_unit * 4));
 
     // update points
-    var lpnt = g_xy[0].sp, rpnt = g_xy[1].ep;
-    var ppnt = create_point(new_x, new_y);
-    var cpnt = create_point(ppnt.x, ppnt.y + g_pendulum_len);
-    g_xy = [create_vector(lpnt, cpnt), create_vector(cpnt, rpnt), create_vector(cpnt, ppnt)]; // left, right, center
+    g_npnt = create_point(new_x, new_y);
 
     // unpdate cables, pin, and pendulum
     measure();
     draw_problem();
+    g_cpnt = create_point(g_npnt.x, g_npnt.y);
 
+/*
     // update tooltip
     g_tooltip
         .style("left", (d3.event.sourceEvent.clientX + 40).toString() + "px")
         .style("top", (d3.event.sourceEvent.clientY - 10).toString() + "px")
-        .html(ppnt.x.toFixed(g_digit).toString() + ", " + ppnt.y.toFixed(g_digit).toString());
-}
+        .html(cpnt.x.toFixed(g_digit).toString() + ", " + cpnt.y.toFixed(g_digit).toString());
+*/}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // draw cables, g_pins, and pendulum
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function draw_problem() {
     // prepare temporary points for cable, pin and pendulum
-    var t_xy = g_xy.concat(g_xy);
+    var m_ppnt = create_point(g_cpnt.x, g_cpnt.y - g_pendulum_len);
+    var m_xy = [create_vector(g_lpnt, g_npnt), create_vector(g_npnt, g_rpnt), create_vector(g_npnt, m_ppnt)]; // left, right, center
+    var t_xy = m_xy.concat(m_xy);
 
     // draw or update cables
-    g_structure.selectAll(".cable")
-        .data(t_xy).join("line").classed("cable", true) // .join("line"), same to .enter().append("line"), is valid only for d3.v5
-        .attr("x1", d => d.sp.x).attr("y1", d => d.sp.y) // "d =>" makes d as parameter of each element in g_xy
+    g_structure.selectAll(".cable").data(t_xy).join("line").classed("cable", true) // .join("line"), same to .enter().append("line"), is valid only for d3.v5
+        .attr("id", (d, i) => "cable" + i)
+        .attr("x1", d => d.sp.x).attr("y1", d => d.sp.y) // "d =>" makes d as parameter of each element in m_xy
         .attr("x2", d => d.ep.x).attr("y2", d => d.ep.y)
         .attr("style", (d, i) => set_cable_style(i, 3))
         .on("mouseover", d => mouse_enter("length", d.mg))
         .on("mouseout", mouse_out);
 
-    // draw or update g_pins and labels
-    var j_xy = [g_xy[0].sp, g_xy[1].sp, g_xy[1].ep]; // point
-    g_structure.selectAll("circle")
-        .data(j_xy).join("circle")
+    g_structure.select("#cable2", "#cable5")
+        .transition().ease(d3.easeElastic).duration(1000).attr("x2", g_npnt.x)
+        .transition().ease(d3.easeElastic).duration(1000).attr("y2", g_npnt.y - g_pendulum_len);
+
+    // draw or update g_pins
+    var j_xy = [g_lpnt, g_npnt, g_rpnt]; // point
+    g_structure.selectAll("circle").data(j_xy).join("circle").attr("id", (d, i) => "pin" + i)
         .attr("cx", d => d.x).attr("cy", d => d.y).attr("r", gv_ele_unit / 2)
         .attr("style", "fill:white; stroke-width:1; stroke:dimgrey");
+    g_structure.select("#pin1").attr("style", "cursor:pointer; fill:white; stroke-width:2; stroke:#ff6f6f").call(d3.drag()
+        //.on("start", drag_pendulum_started)
+        .on("drag", drag_pendulum_ing));
+    //.on("end", drag_ended));
 
     // draw or update a pendulum
-    draw_pendulum(g_structure, g_xy[2].ep.x, g_xy[2].ep.y, "100N", true, "pendulum");
+    draw_pendulum(g_structure, "100N", true, "pendulum");
 }
 
 function measure() {
     // draw reference line
-    var cpnt = [g_xy[1].sp]; // center point
     var ref_line = g_structure.selectAll("g#ref_line").data([1]).join("g").attr("id", "ref_line");
-    ref_line.selectAll("line")
-        .data(cpnt).join("line")
+    ref_line.selectAll("line").data([g_npnt]).join("line")
         .attr("x1", d => d.x - 100).attr("y1", d => d.y)
         .attr("x2", d => d.x + 100).attr("y2", d => d.y)
         .attr("style", "stroke:dimgrey; stroke-linejoin:round; stroke-linecap:round; stroke-width:1; stroke-dasharray:1,3");
 
     // position vector for length and angle of left and right cable
-    var lft = create_vector(g_xy[0].sp, g_xy[0].ep); // position vector
-    var rgt = create_vector(g_xy[0].ep, g_xy[1].ep); // position vector
+    var lft = create_vector(g_lpnt, g_npnt); // position vector of lpnt -> npnt
+    var rgt = create_vector(g_npnt, g_rpnt); // position vector of npnt -> rpnt
 
     // draw angle
-    draw_angle_arc_360(g_structure, g_xy[2].sp.x, g_xy[2].sp.y, 180 + lft.ng, 180, 50, 1, "angle", "left");
-    draw_angle_arc_360(g_structure, g_xy[2].sp.x, g_xy[2].sp.y, 0, rgt.ng, 50, 1, "angle", "right");
+    draw_angle_arc_360(g_structure, g_npnt.x, g_npnt.y, 180 + lft.ng, 180, 50, 1, "angle", "left");
+    draw_angle_arc_360(g_structure, g_npnt.x, g_npnt.y, 0, rgt.ng, 50, 1, "angle", "right");
 }
 
-function draw_pendulum(p_svg_mom, p_x, p_y, p_load, p_drag, p_id) {
-    p_svg_mom.selectAll("#pendulum").data([0]).join("circle") // set circle fill to the created pattern => make square image to circle image
-        .attr("id", p_id)
-        .attr("cy", 0).attr("cy", 0).attr("r", 20)
+function draw_pendulum(p_svg_mom, p_load, p_drag, p_id) {
+    var dx = g_npnt.x - g_cpnt.x, dy = g_npnt.y - g_cpnt.y;
+    p_svg_mom.selectAll("#pendulum").data([0]).join("circle").attr("id", p_id) // set circle fill to the created pattern => make square image to circle image
+        .attr("cx", 0).attr("cy", 0).attr("r", 20)
         .attr("fill", "url(#img_pattern)")
-        .attr("transform", "translate(" + p_x + "," + p_y + ") scale(1,-1)"); // translate
+        .attr("transform", "translate(" + (g_cpnt.x - 2 * dx) + "," + (g_cpnt.y - g_pendulum_len - 2 * dy) + ") scale(1,-1)") // translate
+        .transition().ease(d3.easeElastic).duration(1000)
+        .attr("transform", "translate(" + g_npnt.x + "," + (g_npnt.y - g_pendulum_len) + ") scale(1,-1)"); // translate;
+
     p_svg_mom.selectAll(".pendulum_text").data([0]).join("text").classed("pendulum_text", true)
         .attr("x", 0).attr("y", 0).text(p_load)
         .attr("style", "cursor:default; fill:grey; text-anchor:middle") // start/middle/end
-        .attr("transform", "translate(" + p_x + "," + (p_y - 35) + ") scale(1,-1)");
+        .attr("transform", "translate(" + g_npnt.x + "," + (g_npnt.y - g_pendulum_len - 35) + ") scale(1,-1)");
 
-    // set drag callback function
-    if (p_drag == true) {
-        d3.select("#" + p_id).attr("style", "cursor:pointer; stroke-width:2; stroke:#ff6f6f").call(d3.drag()
-            //.container(p_svg_mom.node()) // make beam the coordinate system of dragging point
-            .on("start", drag_pendulum_started)
-            .on("drag", drag_pendulum_ing)
-            .on("end", drag_ended));
-    }
+    /*    // set drag callback function
+        if (p_drag == true) {
+            d3.select("#" + p_id).attr("style", "cursor:pointer; stroke-width:2; stroke:#ff6f6f").call(d3.drag()
+                //.container(p_svg_mom.node()) // make beam the coordinate system of dragging point
+                .on("start", drag_pendulum_started)
+                .on("drag", drag_pendulum_ing)
+                .on("end", drag_ended));
+        }*/
 }
 
 function mouse_enter(p_tgt_type, p_data) {
