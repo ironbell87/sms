@@ -371,12 +371,11 @@
 
 var g_span = 600, g_load = 100, g_load_type = "point", g_loc_fr = 300, g_loc_to = 300;
 //var g_Va = 50, g_Vb = 50, g_Ha = 0;
-var gv_pre_x, gv_pre_y; // for dragging
-const g_support = ["Simple support", "Cantilever"];
-let g_setting = { b: 30.0, h: 50.0, L: 600.0, P: 100.0, E: 2200.0, Support: "Simple support", I: function () { return this.b * Math.pow(this.h, 3) / 12; } };
+var gv_pre_x, gv_pre_y, gv_to_fr, gv_to_to; // for dragging
 
 $(document).ready(function () {
     // update setting
+    g_setting = { b: 30.0, h: 50.0, L: 600.0, P: 100.0, E: 2200.0, Support: "Simple support", I: function () { return this.b * Math.pow(this.h, 3) / 12; } };
     $("#setting_space").css("height", "220px");
     $(document).on("input", "#input_S", function () {
         var spt_idx = parseInt($(this).val());
@@ -441,49 +440,46 @@ function drag_load_started() {
     // set point at start of drag
     gv_pre_x = g_loc_fr * gv_ratio_len;
     gv_pre_y = d3.event.y;
+    gv_to_fr = (d3.event.x - 100) - g_loc_fr * gv_ratio_len;
+    gv_to_to = g_loc_to * gv_ratio_len - (d3.event.x - 100);
 }
 
 function drag_load_ing() {
     // if drag is not needed
     if (d3.select(this).datum().drag == false) return;
 
-    // get svg of this load
-    var svg_load = d3.select(this.parentNode);
-
     // get new x
-    var pre_trans = get_transformation(svg_load.attr("transform"));
-    var v_new_x = d3.event.x;
+    var v_new_x = d3.event.x, v_end_x = v_new_x;
 
     // apply constraint to end point of load
     switch (this.id) {
         case "pnt_load": // coordinate system of parent node is used
-            if (v_new_x < 0) v_new_x = 0;
-            if (gv_span < v_new_x) v_new_x = gv_span;
-            v_end_x = v_new_x;
-            svg_load.attr("transform", "translate(" + v_new_x + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
+            v_new_x = Math.max(0, v_new_x);
+            v_new_x = Math.min(v_new_x, gv_span);
             break;
         case "ufm_load": // coordinate system of parent node is used
-            v_new_x = pre_trans.translateX + d3.event.dx; // pre_x + delta_x = new_x of point load or start_x of uniform load
-            if (v_new_x < 0) v_new_x = 0;
-            if (gv_span < v_new_x) v_new_x = gv_span;
-            v_end_x = v_new_x + ((g_loc_to - g_loc_fr) * gv_ratio_len);
-            if (gv_span <= v_end_x) {
-                v_end_x = gv_span;
-                v_new_x = v_end_x - ((g_loc_to - g_loc_fr) * gv_ratio_len);
-            }
-            svg_load.attr("transform", "translate(" + v_new_x + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
+            v_new_x = Math.max(0, (d3.event.x - 100) - gv_to_fr);
+            v_end_x = v_new_x + (gv_to_fr + gv_to_to);
+            v_end_x = Math.min(v_end_x, g_span * gv_ratio_len);
+            v_new_x = v_end_x - (gv_to_fr + gv_to_to);
             break;
         case "s_u_load": // coordinate system of parent of ufm_load is used
-            v_new_x = Math.max(0, gv_pre_x + d3.event.x);
             v_end_x = g_loc_to * gv_ratio_len;
-            if (v_end_x <= v_new_x) v_new_x = v_end_x - 5 * gv_ratio_len; // 5 is the min of delta
-            svg_load.attr("transform", "translate(" + v_new_x + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
+            v_new_x = Math.max(0, gv_pre_x + d3.event.x);
+            v_new_x = Math.min(v_new_x, v_end_x - 5 * gv_ratio_len); // 5 is the min of delta
+            //v_new_x = Math.max(0, gv_pre_x + d3.event.x);
+            //v_end_x = g_loc_to * gv_ratio_len;
+            //if (v_end_x <= v_new_x) v_new_x = v_end_x - 5 * gv_ratio_len; // 5 is the min of delta
+            //svg_load.attr("transform", "translate(" + v_new_x + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
             break;
         case "e_u_load": // coordinate system of parent of ufm_load is used
             v_new_x = gv_pre_x;
-            v_end_x = Math.min(v_new_x + d3.event.x, gv_span); // d3.event.dx + g_loc_to * gv_ratio_len;
-            if (v_end_x <= v_new_x) v_end_x = v_new_x + 5 * gv_ratio_len; // 5 is the min of delta
-            svg_load.attr("transform", "translate(" + v_end_x + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
+            v_end_x = Math.min(v_new_x + d3.event.x, gv_span);
+            v_end_x = Math.max(v_new_x + 5 * gv_ratio_len, v_end_x); // 5 is the min of delta
+            //v_new_x = gv_pre_x;
+            //v_end_x = Math.min(v_new_x + d3.event.x, gv_span); // d3.event.dx + g_loc_to * gv_ratio_len;
+            //if (v_end_x <= v_new_x) v_end_x = v_new_x + 5 * gv_ratio_len; // 5 is the min of delta
+            //svg_load.attr("transform", "translate(" + v_end_x + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
             break;
     }
 

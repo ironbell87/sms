@@ -2,11 +2,11 @@
 const g_bg_sz = [700, 1000]; // size of svg for problem
 const g_mat = [["A", "B", "C", "D", "E"],
 [2200, 3150, 4660, 5219, 6000]];
-let g_setting = { A: 3.0, L: 60.0, P: 500.0, E: 2200.0 };
 let g_scaler, g_pre_len = 0;
 
 $(document).ready(function () {
     // update sectional area
+    g_setting = { A: 3.0, L: 60.0, P: 500.0, E: 2200.0 };
     $(document).on("input", "#input_M", function () {
         var mat_idx = parseInt($(this).val());
         g_setting.E = g_mat[1][mat_idx];

@@ -1,21 +1,21 @@
-﻿var g_span = 600, g_load = 100, g_load_type = "point", g_loc_fr = 300, g_loc_to = 300;
-var gv_pre_x, gv_pre_y; // for dragging
-const g_support = ["Simple support", "Cantilever"];
-let g_setting = { b: 30.0, h: 50.0, L: 600.0, P: 100.0, E: 2200.0, Support: "Simple support", I: function () { return this.b * Math.pow(this.h, 3) / 12; } };
+﻿var g_span = 8, g_load = 5, g_load_type = "point", g_loc_fr = 4, g_loc_to = 4;
+var gv_pre_x, gv_pre_y, gv_to_fr, gv_to_to; // for dragging
 var g_dgm, g_d3_point_load, g_cur_loc, g_FBD_y = 120, g_SFD_y = g_FBD_y + 100, g_BMD_y = g_SFD_y + 100;
 
 $(document).ready(function () {
     // update setting
+    //g_setting = { b: 30.0, h: 50.0, L: 8.0, P: 5.0, E: 2200.0, Support: "Simple support", I: function () { return this.b * Math.pow(this.h, 3) / 12; } };
+    g_setting = { L: 8.0, P: 5.0, Support: "Simple support" };
     $("#setting_space").css("height", "220px");
     $(document).on("input", "#input_S", function () {
         var spt_idx = parseInt($(this).val());
         g_setting.Support = g_support[spt_idx];
-        if ($(".div_setting > label")[2] != undefined) {
-            if (g_setting.Support == g_support[0])
-                $(".div_setting > label")[2].innerHTML = "V<sub>B</sub> (N)"; // an element of array of jQuery is a DOM element, therefore make the DOM element to jQuery element using "$($(..."
-            else
-                $($(".div_setting > label")[2]).html("M<sub>A</sub> (Nmm)"); // $($(... => make jQuery element
-        }
+        //if ($(".div_setting > label")[2] != undefined) {
+        //    if (g_setting.Support == g_support[0])
+        //        $(".div_setting > label")[2].innerHTML = "V<sub>B</sub> (N)"; // an element of array of jQuery is a DOM element, therefore make the DOM element to jQuery element using "$($(..."
+        //    else
+        //        $($(".div_setting > label")[2]).html("M<sub>A</sub> (Nmm)"); // $($(... => make jQuery element
+        //}
         $("#label_S").html(g_setting.Support);
 
         draw_beam_problem();
@@ -40,7 +40,7 @@ $(document).ready(function () {
     });
     $(document).on("input", "#input_P", function () {
         g_load = parseFloat($(this).val());
-        $("#label_P").html(g_load.toFixed(g_digit) + " N");
+        $("#label_P").html(g_load.toFixed(g_digit) + " kN");
         draw_beam_problem();
         solve_beam_problem();
         draw_beam_diagram();
@@ -52,7 +52,7 @@ $(document).ready(function () {
         g_loc_fr = g_loc_fr * ratio; // rounding to 0, 5, 10, ... makes large error
         g_loc_to = g_loc_to * ratio;
         g_cur_loc = g_cur_loc * ratio;
-        $("#label_L").html(g_span.toFixed(g_digit) + " mm");
+        $("#label_L").html(g_span.toFixed(g_digit) + " m");
         draw_beam_problem();
         solve_beam_problem();
         draw_beam_diagram();
@@ -71,55 +71,56 @@ function drag_load_started() {
     // set point at start of drag
     gv_pre_x = g_loc_fr * gv_ratio_len;
     gv_pre_y = d3.event.y;
+    gv_to_fr = (d3.event.x - 100) - g_loc_fr * gv_ratio_len;
+    gv_to_to = g_loc_to * gv_ratio_len - (d3.event.x - 100);
 }
 
 function drag_load_ing() {
     // if drag is not needed
     if (d3.select(this).datum().drag == false) return;
 
-    // get svg of this load
-    var svg_load = d3.select(this.parentNode);
-
     // get new x
-    var pre_trans = get_transformation(svg_load.attr("transform"));
-    var v_new_x = d3.event.x;
+    var v_new_x = d3.event.x, v_end_x = v_new_x;
 
     // apply constraint to end point of load
     switch (this.id) {
-        case "pnt_load": // coordinate system of parent node is used
-            if (v_new_x < 0) v_new_x = 0;
-            if (gv_span < v_new_x) v_new_x = gv_span;
-            v_end_x = v_new_x;
-            svg_load.attr("transform", "translate(" + v_new_x + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
+        case "pnt_load":
+//            if (v_new_x < 0) v_new_x = 0;
+//            if (gv_span < v_new_x) v_new_x = gv_span;
+            v_new_x = Math.max(0, v_new_x);
+            v_new_x = Math.min(v_new_x, gv_span);
             break;
         case "ufm_load": // coordinate system of parent node is used
-            v_new_x = pre_trans.translateX + d3.event.dx; // pre_x + delta_x = new_x of point load or start_x of uniform load
-            if (v_new_x < 0) v_new_x = 0;
-            if (gv_span < v_new_x) v_new_x = gv_span;
-            v_end_x = v_new_x + ((g_loc_to - g_loc_fr) * gv_ratio_len);
-            if (gv_span <= v_end_x) {
-                v_end_x = gv_span;
-                v_new_x = v_end_x - ((g_loc_to - g_loc_fr) * gv_ratio_len);
-            }
-            svg_load.attr("transform", "translate(" + v_new_x + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
+            v_new_x = Math.max(0, (d3.event.x - 100) - gv_to_fr);
+            v_end_x = v_new_x + (gv_to_fr + gv_to_to);
+            v_end_x = Math.min(v_end_x, g_span * gv_ratio_len);
+            v_new_x = v_end_x - (gv_to_fr + gv_to_to);
+
+            //////v_new_x = pre_trans.translateX + d3.event.dx; // pre_x + delta_x = new_x of point load or start_x of uniform load
+            //////if (v_new_x < 0) v_new_x = 0;
+            //////if (gv_span < v_new_x) v_new_x = gv_span;
+            //////v_end_x = v_new_x + ((g_loc_to - g_loc_fr) * gv_ratio_len);
+            //////if (gv_span <= v_end_x) {
+            //////    v_end_x = gv_span;
+            //////    v_new_x = v_end_x - ((g_loc_to - g_loc_fr) * gv_ratio_len);
+            //////}
+            //////svg_load.attr("transform", "translate(" + v_new_x + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
             break;
-        case "s_u_load": // coordinate system of parent of ufm_load is used
-            v_new_x = Math.max(0, gv_pre_x + d3.event.x);
+        case "s_u_load":
             v_end_x = g_loc_to * gv_ratio_len;
-            if (v_end_x <= v_new_x) v_new_x = v_end_x - 5 * gv_ratio_len; // 5 is the min of delta
-            svg_load.attr("transform", "translate(" + v_new_x + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
+            v_new_x = Math.max(0, gv_pre_x + d3.event.x);
+            v_new_x = Math.min(v_new_x, v_end_x - 0.1 * gv_ratio_len); // 0.1 * gv_ratio_len = 0.1m in g_span
             break;
-        case "e_u_load": // coordinate system of parent of ufm_load is used
+        case "e_u_load":
             v_new_x = gv_pre_x;
-            v_end_x = Math.min(v_new_x + d3.event.x, gv_span); // d3.event.dx + g_loc_to * gv_ratio_len;
-            if (v_end_x <= v_new_x) v_end_x = v_new_x + 5 * gv_ratio_len; // 5 is the min of delta
-            svg_load.attr("transform", "translate(" + v_end_x + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
+            v_end_x = Math.min(v_new_x + d3.event.x, gv_span);
+            v_end_x = Math.max(v_new_x + 0.1 * gv_ratio_len, v_end_x); // 0.1 * gv_ratio_len = 0.1m in g_span
             break;
     }
 
     // update input for position of the load
-    g_loc_fr = round_by_unit(v_new_x / gv_ratio_len, 5); // transform to x in graphic to logical; then round to 0, 5, 10, 15, ...
-    g_loc_to = round_by_unit(v_end_x / gv_ratio_len, 5); // transform to x in graphic to logical; then round to 0, 5, 10, 15, ...
+    g_loc_fr = round_by_unit(v_new_x / gv_ratio_len, 0.1); // dragging by 0.1m
+    g_loc_to = round_by_unit(v_end_x / gv_ratio_len, 0.1); // dragging by 0.1m
 
     // redraw problem
     draw_beam_problem();
@@ -138,7 +139,7 @@ function drag_slider_ing() { // drag function for slider
     g_cur_loc = Math.min(g_cur_loc, g_span);
 
     // snap to indexing location
-    var v_tol = gv_span / 120 / gv_ratio_len;
+    var v_tol = gv_span / 100 / gv_ratio_len;
     if (Math.abs(g_cur_loc - g_loc_fr) < v_tol) g_cur_loc = g_loc_fr;
     if (Math.abs(g_cur_loc - g_loc_to) < v_tol) g_cur_loc = g_loc_to;
     //if ((g_setting.Support == g_support[0]) && (Math.abs(g_cur_loc - get_zero_shear_loc()) < v_tol)) g_cur_loc = get_zero_shear_loc();
@@ -152,13 +153,13 @@ function drag_slider_ing() { // drag function for slider
     g_tooltip
         .style("left", (d3.event.sourceEvent.clientX - 55).toString() + "px")
         .style("top", (d3.event.sourceEvent.clientY - 35).toString() + "px")
-        .html(g_cur_loc.toFixed(g_digit) + "mm");
+        .html(g_cur_loc.toFixed(g_digit) + "m");
 }
 
 function change_point_load_color(p_d3, p_color) {
-    p_d3.select("text").attr("style", "cursor:default; fill:" + p_color + "; fill-opacity:0.7; text-anchor:middle");
-    p_d3.select("line").attr("style", "fill:" + p_color + "; fill-opacity:0.7; stroke:" + p_color + "; stroke-opacity:0.7; stroke-width:1");
-    p_d3.select("polygon").attr("style", "fill:" + p_color + "; fill-opacity:0.7; stroke:" + p_color + "; stroke-opacity:0.7; stroke-width:1");
+    p_d3.select("text").attr("style", "cursor:default; fill:" + p_color + "; text-anchor:middle");
+    p_d3.select("line").attr("style", "fill:" + p_color + "; stroke:" + p_color + "; stroke-opacity:0.7; stroke-width:1");
+    p_d3.select("polygon").attr("style", "fill:" + p_color + "; stroke:" + p_color + "; stroke-opacity:0.7; stroke-width:1");
     p_d3.select("path").attr("style", "fill:none; stroke:" + p_color + "; stroke-opacity:0.7; stroke-width:1");
 }
 
@@ -288,7 +289,7 @@ function draw_beam_FBD(p_svg_mom, p_org_x, p_org_y, p_ang, p_span) {
     }
 
     // reaction of node A = initial value of shear and bending moment
-    var m_shr_color = "lightpink", m_mnt_color = "lightblue";
+    var m_shr_color = "Plum", m_mnt_color = "LightBlue";
     if (g_reaction[1] * g_reaction[2] == 0) { m_shr_color = "dimgrey", m_mnt_color = "dimgrey"; }
     change_point_load_color(m_d3.select(".simple_reaction, .fix_reaction"), m_shr_color);
     change_point_load_color(m_d3.select(".fix_mnt_reaction"), m_mnt_color);
@@ -329,7 +330,7 @@ function draw_beam_SFD(p_svg_mom, p_org_x, p_org_y, p_ang, p_span) {
     m_d3.selectAll(".completed_SFD_init_val").data(shr_str).join("text").classed("completed_SFD_init_val", true)
         .attr("x", -gv_ele_unit / 5).attr("y", d = -get_shear(0) * m_ratio_load - gv_ele_unit / 5)
         .text(d => (get_shear(0)).toFixed(g_digit))
-        .attr("style", "cursor:default; fill:lightpink; text-anchor:end"); // start/middle/end
+        .attr("style", "cursor:default; fill:Plum; text-anchor:end"); // start/middle/end
 }
 
 function get_SFD_string(p_loc, p_span) {
@@ -426,26 +427,26 @@ function draw_slider(p_d3, p_loc) {
     p_d3.selectAll(".parted_FBD").data(fbd_str).join("polygon").classed("parted_FBD", true)
         .attr("transform", "translate(0," + g_FBD_y + ") scale(" + gv_ratio_len + "," + m_ratio_load + ")")
         .attr("points", d => d)
-        .attr("style", "fill:orange; fill-opacity:0.4;");
+        .attr("style", "fill:OrangeRed; fill-opacity:0.4;");
     var m_color = "dimgrey";
-    if ((0 < g_loc_fr) && (g_loc_fr < p_loc)) m_color = "orange";
+    if ((0 < g_loc_fr) && (g_loc_fr < p_loc)) m_color = "OrangeRed";
     change_point_load_color(g_d3_point_load, m_color);
 
     // FBD line
     p_d3.selectAll(".FBD_line").data([get_load(p_loc)]).join("line").classed("FBD_line", true)
         .attr("x1", v_loc).attr("y1", g_FBD_y)
         .attr("x2", v_loc).attr("y2", d => g_FBD_y + d * m_ratio_load)
-        .attr("style", "stroke:orange; stroke-linejoin:round; stroke-linecap:round; stroke-width: 2");
+        .attr("style", "stroke:OrangeRed; stroke-linejoin:round; stroke-linecap:round; stroke-width: 2");
     var m_load = 0;
     if ((g_loc_fr <= p_loc) && (p_loc <= g_loc_to) && (g_loc_fr != g_loc_to)) m_load = g_load;
     p_d3.selectAll(".FBD_line_text").data([-m_load]).join("text").classed("FBD_line_text", true)
         .attr("x", v_loc + gv_ele_unit / 5).attr("y", g_FBD_y + 4 * gv_ele_unit / 5)
-        .html(d => "-w(x) = " + d.toFixed(g_digit))
-        .attr("style", "cursor:default; fill:orange; text-anchor:start"); // start/middle/end
+        .text(d => "-w(x) = " + d.toFixed(g_digit))
+        .attr("style", "cursor:default; fill:OrangeRed; text-anchor:start"); // start/middle/end
     p_d3.selectAll(".FBD_area_text").data([get_load(p_loc)]).join("text").classed("FBD_area_text", true)
         .attr("x", v_loc - gv_ele_unit / 5).attr("y", g_FBD_y + 4 * gv_ele_unit / 5)
-        .text(d => "accumulated load = " + (get_shear(p_loc) - get_shear(0)).toFixed(g_digit))
-        .attr("style", "cursor:default; fill:orange; fill-opacity:0.7; text-anchor:end"); // start/middle/end
+        .text(d => "area = " + (get_shear(p_loc) - get_shear(0)).toFixed(g_digit))
+        .attr("style", "cursor:default; fill:#F0A0A0; text-anchor:end"); // start/middle/end
 
     // shear
     var m_ratio_load = gv_ratio_load;
@@ -454,21 +455,21 @@ function draw_slider(p_d3, p_loc) {
     p_d3.selectAll(".parted_SFD").data(shr_str).join("polygon").classed("parted_SFD", true)
         .attr("transform", "translate(0," + g_SFD_y + ") scale(" + gv_ratio_len + "," + -m_ratio_load + ")")
         .attr("points", d => d)
-        .attr("style", "fill:lightpink;");
+        .attr("style", "fill:Plum;");
 
     // shear line
     p_d3.selectAll(".SFD_line").data([get_shear(p_loc)]).join("line").classed("SFD_line", true).raise()
         .attr("x1", v_loc).attr("y1", g_SFD_y)
         .attr("x2", v_loc).attr("y2", d => g_SFD_y - d * m_ratio_load)
-        .attr("style", "stroke:red; stroke-linejoin:round; stroke-linecap:round; stroke-width: 2");
+        .attr("style", "stroke:MediumVioletRed; stroke-linejoin:round; stroke-linecap:round; stroke-width: 2");
     p_d3.selectAll(".SFD_line_text").data([get_shear(p_loc)]).join("text").classed("SFD_line_text", true)
         .attr("x", v_loc + gv_ele_unit / 5).attr("y", d => g_SFD_y - d * m_ratio_load - ((d >= 0) ? 1.3 : -4) * gv_ele_unit / 5)
-        .html(d => "V(x) = " + d.toFixed(g_digit) + " = " + get_shear(0).toFixed(g_digit) + " + " + (d - get_shear(0)).toFixed(g_digit))
-        .attr("style", "cursor:default; fill:red; text-anchor:start"); // start/middle/end
+        .html(d => "V(x) = " + d.toFixed(g_digit) + " = <tspan style='fill:Plum;'>" + get_shear(0).toFixed(g_digit) + "</tspan> + <tspan style='fill:#F0A0A0;'>" + (d - get_shear(0)).toFixed(g_digit) + "</tspan>")
+        .attr("style", "cursor:default; fill:MediumVioletRed; text-anchor:start"); // start/middle/end
     p_d3.selectAll(".SFD_area_text").data([get_shear(p_loc)]).join("text").classed("SFD_area_text", true)
         .attr("x", v_loc - gv_ele_unit / 5).attr("y", d => g_SFD_y + ((d >= 0) ? 4 : -1.3) * gv_ele_unit / 5)
-        .text(d => "accumulated shear = " + (get_moment(p_loc) - get_moment(0)).toFixed(g_digit))
-        .attr("style", "cursor:default; fill:lightpink; text-anchor:end"); // start/middle/end
+        .text(d => "area = " + (get_moment(p_loc) - get_moment(0)).toFixed(g_digit))
+        .attr("style", "cursor:default; fill:Plum; text-anchor:end"); // start/middle/end
 
     // slope for shear
     var lines = get_tangent_line(p_loc, "shear", -m_ratio_load);
@@ -481,18 +482,18 @@ function draw_slider(p_d3, p_loc) {
     p_d3.selectAll(".parted_BMD").data(mnt_str).join("polygon").classed("parted_BMD", true)
         .attr("transform", "translate(0," + g_BMD_y + ") scale(" + gv_ratio_len + "," + m_ratio_load + ")")
         .attr("points", d => d)
-        .attr("style", "fill:lightblue;");
+        .attr("style", "fill:LightBlue;");
 
     // moment line
     p_d3.selectAll(".BMD_line").data([get_moment(p_loc)]).join("line").classed("BMD_line", true).raise()
         .attr("x1", v_loc).attr("y1", g_BMD_y)
         .attr("x2", v_loc).attr("y2", d => g_BMD_y + d * m_ratio_load)
-        .attr("style", "stroke:blue; stroke-linejoin:round; stroke-linecap:round; stroke-width: 2");
+        .attr("style", "stroke:SteelBlue; stroke-linejoin:round; stroke-linecap:round; stroke-width: 2");
     p_d3.selectAll(".BMD_line_text").data([get_moment(p_loc)]).join("text").classed("BMD_line_text", true)
         .attr("x", v_loc + gv_ele_unit / 5).attr("y", d => g_BMD_y + d * m_ratio_load + ((d >= 0) ? 4 : -1.3) * gv_ele_unit / 5)
-        //.html(d => "<span style='color:#ff0000'>" + d.toFixed(g_digit) + " = " + get_moment(0).toFixed(g_digit) + " + " + (d - get_moment(0)).toFixed(g_digit) + "</span>")
-        .html(d => "M(x) = " + d.toFixed(g_digit) + " = " + get_moment(0).toFixed(g_digit) + " + " + (d - get_moment(0)).toFixed(g_digit))
-        .attr("style", "cursor:default; fill:blue; text-anchor:start"); // start/middle/end
+        .html(d => "M(x) = " + d.toFixed(g_digit) + " = <tspan style='fill:LightBlue;'>" + get_moment(0).toFixed(g_digit) + "</tspan> + <tspan style='fill:Plum;'>" + (d - get_moment(0)).toFixed(g_digit) + "</tspan>")
+        //.html(d => "M(x) = " + d.toFixed(g_digit) + " = " + get_moment(0).toFixed(g_digit) + " + " + (d - get_moment(0)).toFixed(g_digit))
+        .attr("style", "cursor:default; fill:SteelBlue; text-anchor:start"); // start/middle/end
 
     // slope for moment
     var lines = get_tangent_line(p_loc, "moment", m_ratio_load);
@@ -500,9 +501,9 @@ function draw_slider(p_d3, p_loc) {
 }
 
 function get_tangent_line(p_loc, p_type, p_rto) {
-    var x = p_loc, y = get_shear(x), a = 0, b = -a * x + y, m_dy = g_SFD_y, m_color = "orange";
+    var x = p_loc, y = get_shear(x), a = 0, b = -a * x + y, m_dy = g_SFD_y, m_color = "OrangeRed";
     if ((g_loc_fr <= p_loc) && (p_loc <= g_loc_to) && (g_loc_fr != g_loc_to)) { a = -g_load; b = -a * x + y; }
-    if (p_type == "moment") { y = get_moment(x), a = get_shear(x), b = -a * x + y, m_dy = g_BMD_y, m_color = "red"; }
+    if (p_type == "moment") { y = get_moment(x), a = get_shear(x), b = -a * x + y, m_dy = g_BMD_y, m_color = "MediumVioletRed"; }
     var ref_line = { sx: -0.05 * g_span + x, sy: y, ex: x + 0.05 * g_span, ey: y, slp: 0, dy: m_dy, color: m_color, ratio: p_rto};
     var tngt_line = { sx: ref_line.sx, sy: poly_val([a, b], ref_line.sx), ex: ref_line.ex, ey: poly_val([a, b], ref_line.ex), slp: a, dy: ref_line.dy, color: ref_line.color, ratio: ref_line.ratio };
     return [ref_line, tngt_line];
@@ -512,8 +513,8 @@ function draw_tangent_line(p_d3, p_class, p_data) {
     p_d3.selectAll("." + p_class).data(p_data).join("line").classed(p_class, true).raise()
         .attr("x1", ln => ln.sx * gv_ratio_len).attr("y1", ln => ln.dy + ln.sy * ln.ratio)
         .attr("x2", ln => ln.ex * gv_ratio_len).attr("y2", ln => ln.dy + ln.ey * ln.ratio)
-        .attr("stroke-dasharray", "1 3") // line 2, space 2; line-line
-        .attr("style", ln => "stroke:" + ln.color + "; stroke-width:1;");
+        .attr("stroke-dasharray", "1 3") // line 1, space 3; line-line
+        .attr("style", ln => "stroke:" + ln.color + "; stroke-width:2;");
     p_d3.selectAll("." + p_class + "_text").data([p_data[1]]).join("text").classed(p_class + "_text", true).raise()
         .attr("x", ln => ln.sx * gv_ratio_len - gv_ele_unit / 5)
         .attr("y", ln => ln.dy + ((3 * ln.sy + ln.ey) / 4) * ln.ratio + 1.3 * gv_ele_unit / 5)
@@ -522,7 +523,7 @@ function draw_tangent_line(p_d3, p_class, p_data) {
 }
 
 function mouse_enter() {
-    var tooltip_text = g_cur_loc.toFixed(g_digit) + "mm";
+    var tooltip_text = g_cur_loc.toFixed(g_digit) + "m";
     g_tooltip = d3.select("body").selectAll(".tooltip").data([0]).join("div").classed("tooltip", true)
         .style("left", (d3.event.pageX - 55).toString() + "px")
         .style("top", (d3.event.pageY - 35).toString() + "px")
@@ -545,6 +546,12 @@ function draw_beam_problem() {
     
     // draw loads
     draw_beam_loads(g_structure, 1, true, true); // 1 = the 1st load, true = draw dimension, true = make load draggable
+
+    // change unit; N -> kN, mm -> m
+    g_structure.selectAll("#load_magnitude").text(g_load.toFixed(g_digit) + ((g_load_type == "point") ? "kN" : "kN/m"));
+    var m_len = g_structure.selectAll("#span_length").each(function (d) {
+        d3.select(this).text(d3.select(this).text().slice(0, -3) + "m");
+    })
 }
 
 function solve_beam_problem() {

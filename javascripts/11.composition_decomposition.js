@@ -403,6 +403,7 @@ function draw_pendulum(p_svg_mom, p_load, p_drag, p_id) {
         .attr("fill", "url(#img_pattern)")
         .attr("transform", "translate(" + (g_cpnt.x - 2 * dx) + "," + (g_cpnt.y - g_pendulum_len - 2 * dy) + ") scale(1,-1)") // translate
         .transition().ease(d3.easeElastic).duration(1000)
+        //.transition().ease(d3.easeElastic.amplitude(5.0)).duration(1000)
         .attr("transform", "translate(" + g_npnt.x + "," + (g_npnt.y - g_pendulum_len) + ") scale(1,-1)"); // translate;
 
     p_svg_mom.selectAll(".pendulum_text").data([0]).join("text").classed("pendulum_text", true)

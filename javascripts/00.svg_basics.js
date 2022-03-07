@@ -7,6 +7,8 @@ var g_digit = 2;
 var gv_span = 500, gv_hgt, gv_load = 30;
 var gv_margin_unit = 15, gv_ele_unit = 15;
 var gv_ratio_len, gv_ratio_load;
+const g_support = ["Simple support", "Cantilever"];
+var g_setting = { b: 30.0, h: 50.0, L: 600.0, P: 100.0, E: 2200.0, Support: "Simple support", I: function () { return this.b * Math.pow(this.h, 3) / 12; } };
 
 // variables for trianlge for arrow
 var tri_w = tri_h = 6;

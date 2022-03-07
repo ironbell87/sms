@@ -1,10 +1,10 @@
 ﻿// mem = member of truss
 const g_bg_sz = [700, 350]; // size of svg for problem
 let g_pins = [], g_mems = [], g_loads = [], g_af = [];
-let g_setting = { L: 1000.0, A: 200.0, E: 200000.0, P: 10000.0, S: 5.0 };
 
 $(document).ready(function () {
     // initialize svg
+    g_setting = { L: 1000.0, A: 200.0, E: 200000.0, P: 10000.0, S: 5.0 };
     initialize_svg();
 
     // create and draw

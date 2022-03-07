@@ -2,7 +2,6 @@
 const g_bg_sz = [700, 1000]; // size of svg for problem
 const g_mat = [["A", "B", "C", "D", "E"],
                [2200, 3150, 4660, 5219, 6000]];
-//let g_setting = { b: 30.0, h: 50.0, L: 600.0, P: 100.0, E: 2200.0, Support: "Simple support", I: function () { return this.b * Math.pow(this.h, 3) / 12; } };
 let g_section, g_deflection, g_section_scaler, g_beam_scaler, g_defl_scaler, g_scale_x = gv_span / 2;
 
 $(document).ready(function () {

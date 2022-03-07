@@ -1,10 +1,10 @@
 ﻿var g_bg_sz = [700, 700]; // size of svg for problem
-let g_setting = { sx: 800, sy: 400, t: -550 }; // sigma_x, sigma_y, tau
 let g_Mohr = new Object(), g_scaler, g_svg_unit, g_svg_text_unit = 1.1;
 let g_point_id, g_is_dragging = false;
 
 $(document).ready(function () {
     // solve and draw
+    g_setting = { sx: 800, sy: 400, t: -550 }; // sigma_x, sigma_y, tau
     solve_Mohr();
     initialize_svg();
     draw_Mohrs_circle();
