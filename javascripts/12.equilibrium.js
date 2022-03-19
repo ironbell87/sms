@@ -3,6 +3,7 @@ const g_bg_sz = [700, 660]; // size of svg for problem
 const g_wgt_min = 10, g_wgt_max = 200;
 const g_bar_len = 210, g_bar_hgt = 10, g_hg_hgt = 50, g_mid_hg_hgt = g_hg_hgt * 2.5, g_long_hg_hgt = g_hg_hgt * 5;
 const g_mbl_hgt = g_bar_hgt + g_hg_hgt + Math.sqrt(g_wgt_max) * 2; // 200^(1/3) ~= 5.85, 200^(1/2) = 14.14
+let g_px = 0, g_py = 0;
 let g_nxt_wgt_id = 0, g_nxt_mbl_id = 1000;
 let g_wgt_map = new Map(), g_mbl_map = new Map();
 let minus_bar_color = d3.scaleLinear().domain([-1, 0]).range(["MediumVioletRed", "White"]);
@@ -181,6 +182,7 @@ function drag_wgt_hg_ing() {
     // get wgt group and update position
     //var cur_wgt = d3.select(this.parentNode).datum(); // datum() returns the first linked data, i.e., the current wgt
     var cur_wgt = g_wgt_map.get(d3.select(this.parentNode).datum()); // datum() returns the first linked data, i.e., id of current wgt
+    var old_dist = cur_wgt.dist; // old loc
 
     // update position
     var tx = cur_wgt.dist + dx;
@@ -193,7 +195,7 @@ function drag_wgt_hg_ing() {
     // draw again
     var d3_mom = d3.select(this.parentNode.parentNode); // this(dot) => wgt_unit => bar_wgt
     draw_bar(d3_mom, mom_mbl);
-    draw_wgt_unit(d3_mom, cur_wgt.id, cur_wgt.mag, cur_wgt.dist, 0, g_hg_hgt, false, true);
+    draw_wgt_unit(d3_mom, cur_wgt.id, cur_wgt.mag, cur_wgt.dist, 0, g_hg_hgt, false, true); console.log(d3.event.x, g_px, dx, cur_wgt.dist);
 }
 
 function mouse_enter(p_tgt_type, p_fx, p_fy, p_x, p_y) {

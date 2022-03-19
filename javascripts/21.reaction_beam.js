@@ -456,6 +456,7 @@ function drag_load_ing() {
         case "pnt_load": // coordinate system of parent node is used
             v_new_x = Math.max(0, v_new_x);
             v_new_x = Math.min(v_new_x, gv_span);
+            v_end_x = v_new_x;
             break;
         case "ufm_load": // coordinate system of parent node is used
             v_new_x = Math.max(0, (d3.event.x - 100) - gv_to_fr);

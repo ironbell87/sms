@@ -354,26 +354,25 @@ function draw_problem() {
 
     // draw or update cables
     g_structure.selectAll(".cable").data(t_xy).join("line").classed("cable", true) // .join("line"), same to .enter().append("line"), is valid only for d3.v5
-        .attr("id", (d, i) => "cable" + i)
         .attr("x1", d => d.sp.x).attr("y1", d => d.sp.y) // "d =>" makes d as parameter of each element in m_xy
         .attr("x2", d => d.ep.x).attr("y2", d => d.ep.y)
         .attr("style", (d, i) => set_cable_style(i, 3))
         .on("mouseover", d => mouse_enter("length", d.mg))
         .on("mouseout", mouse_out);
-
-    g_structure.select("#cable2", "#cable5")
-        .transition().ease(d3.easeElastic).duration(1000).attr("x2", g_npnt.x)
-        .transition().ease(d3.easeElastic).duration(1000).attr("y2", g_npnt.y - g_pendulum_len);
+    g_structure.selectAll(".cable").filter(function (d, i) { return (i % 3) === 2; }) // when idx is divided by 3, remainder is 2 => 2, 5 => 3rd and 6th line
+        .transition().ease(d3.easeElastic).duration(1000)
+        .attr("x2", g_npnt.x).attr("y2", g_npnt.y - g_pendulum_len);
 
     // draw or update g_pins
     var j_xy = [g_lpnt, g_npnt, g_rpnt]; // point
-    g_structure.selectAll("circle").data(j_xy).join("circle").attr("id", (d, i) => "pin" + i)
+    g_structure.selectAll(".pin").data(j_xy).join("circle").classed("pin", true)
         .attr("cx", d => d.x).attr("cy", d => d.y).attr("r", gv_ele_unit / 2)
         .attr("style", "fill:white; stroke-width:1; stroke:dimgrey");
-    g_structure.select("#pin1").attr("style", "cursor:pointer; fill:white; stroke-width:2; stroke:#ff6f6f").call(d3.drag()
+    g_structure.selectAll(".pin").filter(function (d, i) { return i === 1; }) // second element
+        .attr("style", "cursor:pointer; fill:white; stroke-width:2; stroke:#ff6f6f").call(d3.drag()
         //.on("start", drag_pendulum_started)
         .on("drag", drag_pendulum_ing));
-    //.on("end", drag_ended));
+        //.on("end", drag_ended));
 
     // draw or update a pendulum
     draw_pendulum(g_structure, "100N", true, "pendulum");
@@ -397,11 +396,10 @@ function measure() {
 }
 
 function draw_pendulum(p_svg_mom, p_load, p_drag, p_id) {
-    var dx = g_npnt.x - g_cpnt.x, dy = g_npnt.y - g_cpnt.y;
     p_svg_mom.selectAll("#pendulum").data([0]).join("circle").attr("id", p_id) // set circle fill to the created pattern => make square image to circle image
         .attr("cx", 0).attr("cy", 0).attr("r", 20)
         .attr("fill", "url(#img_pattern)")
-        .attr("transform", "translate(" + (g_cpnt.x - 2 * dx) + "," + (g_cpnt.y - g_pendulum_len - 2 * dy) + ") scale(1,-1)") // translate
+        .attr("transform", "translate(" + (g_cpnt.x) + "," + (g_cpnt.y - g_pendulum_len) + ") scale(1,-1)") // translate
         .transition().ease(d3.easeElastic).duration(1000)
         //.transition().ease(d3.easeElastic.amplitude(5.0)).duration(1000)
         .attr("transform", "translate(" + g_npnt.x + "," + (g_npnt.y - g_pendulum_len) + ") scale(1,-1)"); // translate;
@@ -409,7 +407,9 @@ function draw_pendulum(p_svg_mom, p_load, p_drag, p_id) {
     p_svg_mom.selectAll(".pendulum_text").data([0]).join("text").classed("pendulum_text", true)
         .attr("x", 0).attr("y", 0).text(p_load)
         .attr("style", "cursor:default; fill:grey; text-anchor:middle") // start/middle/end
-        .attr("transform", "translate(" + g_npnt.x + "," + (g_npnt.y - g_pendulum_len - 35) + ") scale(1,-1)");
+        .attr("transform", "translate(" + g_cpnt.x + "," + (g_cpnt.y - g_pendulum_len - 35) + ") scale(1,-1)")
+        .transition().ease(d3.easeElastic).duration(1000)
+        .attr("transform", "translate(" + g_npnt.x + "," + (g_npnt.y - g_pendulum_len - 35) + ") scale(1,-1)"); // translate;
 
     /*    // set drag callback function
         if (p_drag == true) {

@@ -73,17 +73,16 @@ function draw_pin(p_svg_mom, p_org_x, p_org_y, p_ang) {
 
 function draw_wgt_unit(p_d3, p_id, p_mag, p_x, p_y, p_hgt, p_large_dot, p_drag) {
     // group
-    var d3_wgt_unit = p_d3.selectAll("#wgt_unit_" + p_id).data([p_id]).join("g")
-        .classed("wgt_unit", true).attr("id", "wgt_unit_" + p_id)
+    var d3_wgt_unit = p_d3.selectAll("#wgt_unit_" + p_id).data([p_id]).join("g").classed("wgt_unit", true)
+        .attr("id", "wgt_unit_" + p_id)
         .attr("transform", "translate(" + p_x + ", " + p_y + ")");
 
     // wgt hg
-    d3_wgt_unit.each(function () { draw_wgt_hg(d3_wgt_unit, p_x, -p_hgt, p_large_dot, p_drag, p_y); }); // because wgt hg is downward, -g_hg_hgt
+    d3_wgt_unit.each(function () { draw_wgt_hg(d3_wgt_unit, p_x, -p_hgt, p_large_dot, p_drag, p_mag, p_y); }); // because wgt hg is downward, -g_hg_hgt
 
     // wgt
     var wgt_sz = Math.sqrt(p_mag);
-    d3_wgt_unit.selectAll(".wgt").data([[p_x]]).join("rect")
-        .classed("wgt", true)
+    var d3_wgt = d3_wgt_unit.selectAll(".wgt").data([[p_x]]).join("rect").classed("wgt", true)
         .attr("x", -wgt_sz).attr("y", -g_hg_hgt - wgt_sz * 2)
         .attr("width", wgt_sz * 2).attr("height", wgt_sz * 2)
         .attr("style", "fill:lightgrey; stroke:dimgrey")
@@ -91,14 +90,16 @@ function draw_wgt_unit(p_d3, p_id, p_mag, p_x, p_y, p_hgt, p_large_dot, p_drag) 
         .on("mouseout", function () { mouse_out(); });
 }
 
-function draw_wgt_hg(p_d3, p_x, p_hg_hgt, p_large_dot, p_drag, p_y) {
+function draw_wgt_hg(p_d3, p_x, p_hg_hgt, p_large_dot, p_drag, p_mag, p_y) {
     var dot_radius = gv_ele_unit / 6;
     if (p_large_dot == true) dot_radius *= 2;
     p_d3.selectAll(".wgt_hg").data([p_hg_hgt]).join("line") // hg for wgt
         .classed("wgt_hg", true)
         .attr("x1", 0).attr("y1", 0)
         .attr("x2", 0).attr("y2", hgt => hgt)
-        .attr("style", "stroke:dimgrey; stroke-linejoin:round; stroke-linecap:round; stroke-width: 1");
+        //.attr("x2", 0).attr("y2", hgt => hgt + Math.sqrt(p_mag) * 2)
+        .attr("style", "stroke:dimgrey; stroke-linejoin:round; stroke-linecap:round; stroke-width: 1")
+        //.transition().ease(d3.easeElastic).duration(1000).attr("y2", hgt => hgt);
     var d3_up_dot = p_d3.selectAll(".up_hg_dot").data([p_hg_hgt]).join("circle") // upper dot of hanger
         .classed("up_hg_dot", true)
         .attr("cx", 0).attr("cy", hgt => Math.max(hgt, 0)) // Math.max => -hgt is used for wgt hg, +hgt is used for hg
@@ -118,9 +119,11 @@ function draw_wgt_hg(p_d3, p_x, p_hg_hgt, p_large_dot, p_drag, p_y) {
     }
     p_d3.selectAll(".dn_hg_dot").data([p_hg_hgt]).join("circle") // lower dot of hanger
         .classed("dn_hg_dot", true)
-        .attr("cx", 0).attr("cy", hgt => Math.min(hgt, 0)) // Math.min => -hgt is used for wgt hg, +hgt is used for hg
+        .attr("cx", 0).attr("cy", hgt => hgt) // Math.min => -hgt is used for wgt hg, +hgt is used for hg
+        //.attr("cx", 0).attr("cy", hgt => Math.min(hgt, 0) + Math.sqrt(p_mag) * 2) // Math.min => -hgt is used for wgt hg, +hgt is used for hg
         .attr("r", gv_ele_unit / 6)
-        .attr("style", "fill:white; stroke-width:1; stroke:dimgrey");
+        .attr("style", "fill:white; stroke-width:1; stroke:dimgrey")
+        //.transition().ease(d3.easeElastic).duration(1000).attr("cy", hgt => hgt);
 }
 
 function draw_single_member(p_svg_mom, p_org_x, p_org_y, p_ang, p_span) {
@@ -533,7 +536,10 @@ function draw_beam_loads(p_svg_mom, p_idx, p_draw_dim, p_drag) {
         p_svg_mom.selectAll("g.uniform_load").remove(); // remove previous load
         draw_point_load(p_svg_mom, "point_load", loads);
         if (p_draw_dim == false) return;
-        draw_dimensions(p_svg_mom, 0, 0, 0, "load_dim", [g_loc_fr, (g_span - g_loc_fr)], gv_margin_unit * 5, "mm", "dn");
+        var dims = [];
+        if (Math.abs(g_loc_fr) > 1.0e-3) dims.push(g_loc_fr);
+        if (Math.abs(g_span - g_loc_to) > 1.0e-3) dims.push(g_span - g_loc_to);
+        draw_dimensions(p_svg_mom, 0, 0, 0, "load_dim", dims, gv_margin_unit * 5, "mm", "dn");
     }
     else if (g_load_type == "uniform") {
         // magnitude of load

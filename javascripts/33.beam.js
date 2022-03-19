@@ -10,12 +10,6 @@ $(document).ready(function () {
     $(document).on("input", "#input_S", function () {
         var spt_idx = parseInt($(this).val());
         g_setting.Support = g_support[spt_idx];
-        //if ($(".div_setting > label")[2] != undefined) {
-        //    if (g_setting.Support == g_support[0])
-        //        $(".div_setting > label")[2].innerHTML = "V<sub>B</sub> (N)"; // an element of array of jQuery is a DOM element, therefore make the DOM element to jQuery element using "$($(..."
-        //    else
-        //        $($(".div_setting > label")[2]).html("M<sub>A</sub> (Nmm)"); // $($(... => make jQuery element
-        //}
         $("#label_S").html(g_setting.Support);
 
         draw_beam_problem();
@@ -85,26 +79,15 @@ function drag_load_ing() {
     // apply constraint to end point of load
     switch (this.id) {
         case "pnt_load":
-//            if (v_new_x < 0) v_new_x = 0;
-//            if (gv_span < v_new_x) v_new_x = gv_span;
             v_new_x = Math.max(0, v_new_x);
             v_new_x = Math.min(v_new_x, gv_span);
+            v_end_x = v_new_x;
             break;
         case "ufm_load": // coordinate system of parent node is used
             v_new_x = Math.max(0, (d3.event.x - 100) - gv_to_fr);
             v_end_x = v_new_x + (gv_to_fr + gv_to_to);
             v_end_x = Math.min(v_end_x, g_span * gv_ratio_len);
             v_new_x = v_end_x - (gv_to_fr + gv_to_to);
-
-            //////v_new_x = pre_trans.translateX + d3.event.dx; // pre_x + delta_x = new_x of point load or start_x of uniform load
-            //////if (v_new_x < 0) v_new_x = 0;
-            //////if (gv_span < v_new_x) v_new_x = gv_span;
-            //////v_end_x = v_new_x + ((g_loc_to - g_loc_fr) * gv_ratio_len);
-            //////if (gv_span <= v_end_x) {
-            //////    v_end_x = gv_span;
-            //////    v_new_x = v_end_x - ((g_loc_to - g_loc_fr) * gv_ratio_len);
-            //////}
-            //////svg_load.attr("transform", "translate(" + v_new_x + "," + pre_trans.translateY + ") rotate(" + pre_trans.rotate + ")"); // update svg of the load
             break;
         case "s_u_load":
             v_end_x = g_loc_to * gv_ratio_len;
@@ -119,8 +102,10 @@ function drag_load_ing() {
     }
 
     // update input for position of the load
-    g_loc_fr = round_by_unit(v_new_x / gv_ratio_len, 0.1); // dragging by 0.1m
-    g_loc_to = round_by_unit(v_end_x / gv_ratio_len, 0.1); // dragging by 0.1m
+    //g_loc_fr = round_by_unit(v_new_x / gv_ratio_len, 0.01); // dragging by 0.01m
+    //g_loc_to = round_by_unit(v_end_x / gv_ratio_len, 0.01); // dragging by 0.01m
+    g_loc_fr = round_by_unit(v_new_x, 2) / gv_ratio_len; // dragging by 2px
+    g_loc_to = round_by_unit(v_end_x, 2) / gv_ratio_len; // dragging by 2px
 
     // redraw problem
     draw_beam_problem();
@@ -137,17 +122,18 @@ function drag_slider_ing() { // drag function for slider
     g_cur_loc = d3.event.x / gv_ratio_len;
     g_cur_loc = Math.max(g_cur_loc, 0); // limit of range of new x
     g_cur_loc = Math.min(g_cur_loc, g_span);
+    g_cur_loc = round_by_unit(g_cur_loc, Math.min(0.1, g_span / 200)); // dragging by 0.1m
 
     // snap to indexing location
     var v_tol = gv_span / 100 / gv_ratio_len;
+    //var v_tol = gv_span / 500 * gv_ratio_len;
     if (Math.abs(g_cur_loc - g_loc_fr) < v_tol) g_cur_loc = g_loc_fr;
     if (Math.abs(g_cur_loc - g_loc_to) < v_tol) g_cur_loc = g_loc_to;
     //if ((g_setting.Support == g_support[0]) && (Math.abs(g_cur_loc - get_zero_shear_loc()) < v_tol)) g_cur_loc = get_zero_shear_loc();
     if (Math.abs(g_cur_loc - get_zero_shear_loc()) < v_tol) g_cur_loc = get_zero_shear_loc();
 
     // redraw slider
-    var m_d3 = d3.select(this.parentNode);
-    draw_slider(m_d3, g_cur_loc);
+    draw_slider(d3.select(this.parentNode), g_cur_loc);
 
     // update tooltip
     g_tooltip
@@ -215,7 +201,7 @@ function draw_beam_diagram() {
     if (g_dgm == undefined) return;
 
     // draw free body diagram
-    var sx = 100, ang = 0;
+    var sx = 130, ang = 0;
     draw_beam_FBD(g_dgm, sx, g_FBD_y, ang, g_span);
 
     // draw shear force diagram
@@ -284,7 +270,7 @@ function draw_beam_FBD(p_svg_mom, p_org_x, p_org_y, p_ang, p_span) {
     }
     else { // cantilever
         draw_point_load(m_d3, "fix_reaction", loads);
-        var mnts = [{ x: 0, y: 0, ang: 180, mg: gv_load, label: -g_reaction[2].toFixed(g_digit), drag: false, id: undefined, rad: 20, dir: "ccw" }];
+        var mnts = [{ x: 0, y: 0, ang: 180, mg: gv_load, label: (-g_reaction[2]).toFixed(g_digit), drag: false, id: undefined, rad: 20, dir: "ccw" }];
         if (g_reaction[2] != 0) draw_point_moment(m_d3, "fix_mnt_reaction", mnts);
     }
 
@@ -445,7 +431,7 @@ function draw_slider(p_d3, p_loc) {
         .attr("style", "cursor:default; fill:OrangeRed; text-anchor:start"); // start/middle/end
     p_d3.selectAll(".FBD_area_text").data([get_load(p_loc)]).join("text").classed("FBD_area_text", true)
         .attr("x", v_loc - gv_ele_unit / 5).attr("y", g_FBD_y + 4 * gv_ele_unit / 5)
-        .text(d => "area = " + (get_shear(p_loc) - get_shear(0)).toFixed(g_digit))
+        .text("area = " + (get_shear(p_loc) - get_shear(0)).toFixed(g_digit))
         .attr("style", "cursor:default; fill:#F0A0A0; text-anchor:end"); // start/middle/end
 
     // shear
@@ -549,8 +535,15 @@ function draw_beam_problem() {
 
     // change unit; N -> kN, mm -> m
     g_structure.selectAll("#load_magnitude").text(g_load.toFixed(g_digit) + ((g_load_type == "point") ? "kN" : "kN/m"));
-    var m_len = g_structure.selectAll("#span_length").each(function (d) {
-        d3.select(this).text(d3.select(this).text().slice(0, -3) + "m");
+    var m_len = g_structure.selectAll("#span_length").each(function (d, i) {
+        //if (i == 0) d3.select(this).text(g_span.toFixed(g_digit) + "m");
+        //if (i == 1) d3.select(this).text(g_loc_fr.toFixed(g_digit) + "m");
+        //if (i == 2)
+        //    if (g_load_type == "point") d3.select(this).text((g_span - g_loc_to).toFixed(g_digit) + "m");
+        //    else d3.select(this).text((g_loc_to - g_loc_fr).toFixed(g_digit) + "m");
+        //if (i == 3) d3.select(this).text((g_span - g_loc_to).toFixed(g_digit) + "m");
+
+        d3.select(this).text(d3.select(this).text().slice(0, -2) + "m");
     })
 }
 

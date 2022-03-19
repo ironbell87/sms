@@ -119,18 +119,24 @@ function solve() {
         cbl.seg = create_vector(g_all_wgt_units[i].loc, wgt_unit.loc); // update cbl according the calculated height of the wgt_unit
         cbl.axial = Math.sqrt(Ha * Ha + acc_fy * acc_fy); // calculate axial force of the cbl
         acc_fy += wgt_unit.fy; // prepare next cbl
+        cbl.va = { sy: 7 * Math.sqrt(Math.abs(g_all_wgt_units[i].fy)), ey: 7 * Math.sqrt(Math.abs(wgt_unit.fy)) }; // va = amplitude of vibration; for transition of d3
     });
+    g_cbls[0].va.sy = 0; last_of(g_cbls).va.ey = 0; // fix both ends
 }
 
 function draw() {
     // draw g_cbls
-    g_structure.selectAll(".cbl").data(g_cbls).join("rect").classed("cbl", true)
-        .attr("transform", cbl => "translate(" + cbl.seg.sp.x + ", " + cbl.seg.sp.y + ") rotate(" + cbl.seg.ng + ")") // do not know why "rotate and then translate" does not work!!
-        .attr("x", 0).attr("y", -gv_ele_unit / 8)
-        .attr("width", cbl => cbl.seg.mg).attr("height", gv_ele_unit / 4)
-        .attr("style", "fill:lightgrey; stroke:dimgrey")
+    var m_cbls = JSON.parse(JSON.stringify(g_cbls)); // deep copy of object; not to modify g_cbls
+    m_cbls = m_cbls.concat(m_cbls);
+    g_structure.selectAll(".cbl").data(m_cbls).join("line").classed("cbl", true)
+        //        .attr("transform", cbl => "translate(" + cbl.seg.sp.x + ", " + cbl.seg.sp.y + ") rotate(" + cbl.seg.ng + ")") // do not know why "rotate and then translate" does not work!!
+        .attr("x1", cbl => cbl.seg.sp.x).attr("y1", cbl => cbl.seg.sp.y - cbl.va.sy)
+        .attr("x2", cbl => cbl.seg.ep.x).attr("y2", cbl => cbl.seg.ep.y - cbl.va.ey)
+        .attr("style", (d, i) => set_cable_style(i, m_cbls.length / 2))
         .on("mouseover", cbl => { mouse_enter("cbl", cbl.axial, undefined, cbl.seg.mg) })
         .on("mouseout", function () { mouse_out(); });
+    g_structure.selectAll(".cbl").transition().ease(d3.easeElastic).duration(1000)
+        .attr("y1", cbl => cbl.seg.sp.y).attr("y2", cbl => cbl.seg.ep.y); // transition must be separated because of .on event listener
 
     // draw g_pins
     g_structure.selectAll(".pin").data(g_pins).join("circle") // g_pins for support
@@ -142,9 +148,12 @@ function draw() {
         .on("mouseout", function () { mouse_out(); });
 
     // draw wgts
-    g_wgt_units.forEach(function (wgt_unit) {
-        draw_wgt_unit(g_structure, wgt_unit.id, -wgt_unit.fy, wgt_unit.loc.x, wgt_unit.loc.y, g_hg_hgt, true, false); // true = large up dot, false = no drag
+    g_wgt_units.forEach(function (wgt_unit, i) {
+        draw_wgt_unit(g_structure, wgt_unit.id, -wgt_unit.fy, wgt_unit.loc.x, wgt_unit.loc.y - g_cbls[i].va.ey, g_hg_hgt, true, false); // true = large up dot, false = no drag
+        g_structure.selectAll("#wgt_unit_" + wgt_unit.id).transition().ease(d3.easeElastic).duration(1000)
+            .attr("transform", "translate(" + wgt_unit.loc.x + ", " + wgt_unit.loc.y + ")");
     });
+
 }
 
 function create_wgt_unit(p_x, p_y, p_is_pin) {
