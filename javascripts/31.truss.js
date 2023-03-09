@@ -78,20 +78,21 @@ function create() {
     g_pins.push({ id: 8, bf: create_point(4 * L, 0 * L), af: move_xy(create_point(4 * L, 0 * L), g_af[7].x * S, g_af[7].y * S) });
 
     // create g_mems
+    factor = (g_setting.P / 10000);
     g_mems = []; // bf: before loading; af: after loading
-    g_mems.push({ id: "AB", bf: create_vector(g_pins[0].bf, g_pins[1].bf), af: create_vector(g_pins[0].af, g_pins[1].af) }); // top cord
-    g_mems.push({ id: "BC", bf: create_vector(g_pins[1].bf, g_pins[2].bf), af: create_vector(g_pins[1].af, g_pins[2].af) });
-    g_mems.push({ id: "DE", bf: create_vector(g_pins[3].bf, g_pins[4].bf), af: create_vector(g_pins[3].af, g_pins[4].af) }); // btm cord
-    g_mems.push({ id: "EF", bf: create_vector(g_pins[4].bf, g_pins[5].bf), af: create_vector(g_pins[4].af, g_pins[5].af) });
-    g_mems.push({ id: "FG", bf: create_vector(g_pins[5].bf, g_pins[6].bf), af: create_vector(g_pins[5].af, g_pins[6].af) });
-    g_mems.push({ id: "GH", bf: create_vector(g_pins[6].bf, g_pins[7].bf), af: create_vector(g_pins[6].af, g_pins[7].af) });
-    g_mems.push({ id: "AE", bf: create_vector(g_pins[0].bf, g_pins[4].bf), af: create_vector(g_pins[0].af, g_pins[4].af) }); // vrt cord
-    g_mems.push({ id: "BF", bf: create_vector(g_pins[1].bf, g_pins[5].bf), af: create_vector(g_pins[1].af, g_pins[5].af) });
-    g_mems.push({ id: "CG", bf: create_vector(g_pins[2].bf, g_pins[6].bf), af: create_vector(g_pins[2].af, g_pins[6].af) });
-    g_mems.push({ id: "AD", bf: create_vector(g_pins[0].bf, g_pins[3].bf), af: create_vector(g_pins[0].af, g_pins[3].af) }); // slp cord
-    g_mems.push({ id: "AF", bf: create_vector(g_pins[0].bf, g_pins[5].bf), af: create_vector(g_pins[0].af, g_pins[5].af) });
-    g_mems.push({ id: "CF", bf: create_vector(g_pins[2].bf, g_pins[5].bf), af: create_vector(g_pins[2].af, g_pins[5].af) });
-    g_mems.push({ id: "CH", bf: create_vector(g_pins[2].bf, g_pins[7].bf), af: create_vector(g_pins[2].af, g_pins[7].af) });
+    g_mems.push({ id: "AB", bf: create_vector(g_pins[0].bf, g_pins[1].bf), af: create_vector(g_pins[0].af, g_pins[1].af), mf: factor * -40000.00000 }); // top cord
+    g_mems.push({ id: "BC", bf: create_vector(g_pins[1].bf, g_pins[2].bf), af: create_vector(g_pins[1].af, g_pins[2].af), mf: factor * - 40000.00000 });
+    g_mems.push({ id: "DE", bf: create_vector(g_pins[3].bf, g_pins[4].bf), af: create_vector(g_pins[3].af, g_pins[4].af), mf: factor * 30000.00000 }); // btm cord
+    g_mems.push({ id: "EF", bf: create_vector(g_pins[4].bf, g_pins[5].bf), af: create_vector(g_pins[4].af, g_pins[5].af), mf: factor * 30000.00000 });
+    g_mems.push({ id: "FG", bf: create_vector(g_pins[5].bf, g_pins[6].bf), af: create_vector(g_pins[5].af, g_pins[6].af), mf: factor * 30000.00000 });
+    g_mems.push({ id: "GH", bf: create_vector(g_pins[6].bf, g_pins[7].bf), af: create_vector(g_pins[6].af, g_pins[7].af), mf: factor * 30000.00000 });
+    g_mems.push({ id: "AE", bf: create_vector(g_pins[0].bf, g_pins[4].bf), af: create_vector(g_pins[0].af, g_pins[4].af), mf: factor * 0.00000 }); // vrt cord
+    g_mems.push({ id: "BF", bf: create_vector(g_pins[1].bf, g_pins[5].bf), af: create_vector(g_pins[1].af, g_pins[5].af), mf: factor * -20000.00000 });
+    g_mems.push({ id: "CG", bf: create_vector(g_pins[2].bf, g_pins[6].bf), af: create_vector(g_pins[2].af, g_pins[6].af), mf: factor * 0.00000 });
+    g_mems.push({ id: "AD", bf: create_vector(g_pins[0].bf, g_pins[3].bf), af: create_vector(g_pins[0].af, g_pins[3].af), mf: factor * -42426.40687 }); // slp cord
+    g_mems.push({ id: "AF", bf: create_vector(g_pins[0].bf, g_pins[5].bf), af: create_vector(g_pins[0].af, g_pins[5].af), mf: factor * 14142.13562 });
+    g_mems.push({ id: "CF", bf: create_vector(g_pins[2].bf, g_pins[5].bf), af: create_vector(g_pins[2].af, g_pins[5].af), mf: factor * 14142.13562 });
+    g_mems.push({ id: "CH", bf: create_vector(g_pins[2].bf, g_pins[7].bf), af: create_vector(g_pins[2].af, g_pins[7].af), mf: factor * - 42426.40687 });
 
     // create g_loads
     g_loads = []; // bf: before loading; af: after loading
@@ -114,14 +115,14 @@ function draw() {
     g_structure.selectAll(".u_mem").data(g_mems).join("line").classed("u_mem", true)
         .attr("x1", mem => scaler(mem.bf.sp.x)).attr("y1", mem => scaler(mem.bf.sp.y))
         .attr("x2", mem => scaler(mem.bf.ep.x)).attr("y2", mem => scaler(mem.bf.ep.y))
-        .attr("style", "stroke-width:3; stroke:lightgrey;")// stroke-dasharray:3,3")
-        .on("mouseover", mem => { mouse_enter(mem.bf.mg); })
+        .attr("style", "cursor:pointer; stroke-width:3; stroke:lightgrey;")// stroke-dasharray:3,3")
+        .on("mouseover", mem => { mouse_enter("L = " + mem.bf.mg.toFixed(g_digit + 2) + "mm"); })
         .on("mouseout", function () { mouse_out(); });
     // draw g_pins
     g_structure.selectAll(".u_pin").data(g_pins).join("circle").classed("u_pin", true)
         .attr("cx", pin => scaler(pin.bf.x)).attr("cy", pin => scaler(pin.bf.y))
         .attr("r", 2)
-        .attr("style", "cursor:pointer; fill:lightgrey; stroke-width:1; stroke:dimgrey");
+        .attr("style", "fill:lightgrey; stroke-width:1; stroke:dimgrey");
         //.on("mouseover", pin => { mouse_enter(pin.bf.x, pin.bf.y); })
         //.on("mouseout", function () { mouse_out(); });
     // draw load
@@ -151,28 +152,28 @@ function draw() {
         .attr("transform", mem => "translate(" + scaler(mem.af.sp.x) + ", " + scaler(mem.af.sp.y) + ") rotate(" + mem.af.ng + ")")
         .attr("x", 0).attr("y", -gv_ele_unit / 8)
         .attr("width", mem => scaler(mem.af.mg)).attr("height", gv_ele_unit / 4)
-        .attr("style", "fill:lightgrey; stroke:dimgrey");
+        .attr("style", "fill:lightgrey; stroke:dimgrey")
+        .on("mouseover", mem => { mouse_enter("F = " + mem.mf.toFixed(g_digit + 2) + "N"); })
+        .on("mouseout", function () { mouse_out(); });
     // draw g_pins
     g_structure.selectAll(".pin").data(g_pins).join("circle").classed("pin", true)
         .attr("cx", pin => scaler(pin.af.x)).attr("cy", pin => scaler(pin.af.y))
         .attr("r", 5)
         .attr("style", "cursor:pointer; fill:white; stroke-width:1; stroke:dimgrey")
-        .on("mouseover", (pin, i) => { mouse_enter(g_af[i].x, g_af[i].y); })
+        .on("mouseover", (pin, i) => {mouse_enter("(" + g_af[i].x.toFixed(g_digit + 2) + ", " + g_af[i].y.toFixed(g_digit + 2) + ")mm"); })
         .on("mouseout", function () { mouse_out(); });
 }
 
-function mouse_enter(p_x, p_y) {
+function mouse_enter(p_text) {
     var wth = "170px", hgt = "28px";
     var lft = (d3.event.pageX - 70).toString() + "px", top = (d3.event.pageY - 35).toString() + "px";
-    var tooltip_text = "L = " + p_x.toFixed(g_digit + 2) + "mm";
-    if (p_y != undefined) tooltip_text = "(" + p_x.toFixed(g_digit + 2) + ", " + p_y.toFixed(g_digit + 2) + ")mm";
 
     g_tooltip = d3.select("body").selectAll(".tooltip").data([0]).join("div")
         .classed("tooltip", true)
         .style("left", lft).style("top", top)
         .style("width", wth).style("height", hgt)
         .style("opacity", 0)
-        .html(tooltip_text);
+        .html(p_text);
     g_tooltip
         .transition().duration(500)
         .style("opacity", .8);

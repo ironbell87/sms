@@ -423,7 +423,7 @@ function draw_pendulum(p_svg_mom, p_load, p_drag, p_id) {
 
 function mouse_enter(p_tgt_type, p_data) {
     var wth = "110px", hgt = "28px";
-    var lft = (d3.event.x + 10).toString() + "px", top = (d3.event.y - 35).toString() + "px";
+    var lft = (d3.event.x - 50).toString() + "px", top = (d3.event.y - 35).toString() + "px";
     var tooltip_text;
     switch (p_tgt_type) {
         case "length":

@@ -77,10 +77,17 @@ function create(p_interval) {
     //var wgts = [0, -20, 0]; // ex2 in homepage
     //g_all_wgt_units.push(create_wgt_unit(0, 100, true));
     //g_all_wgt_units.push(create_wgt_unit(100, 90, false));
-    //g_all_wgt_units.push(create_wgt_unit(300, 150, false));
+    //g_all_wgt_units.push(create_wgt_unit(300, 150, true));
     ////g_all_wgt_units.push(create_wgt_unit(0, 150, true));
     ////g_all_wgt_units.push(create_wgt_unit(200, 90, false));
     ////g_all_wgt_units.push(create_wgt_unit(300, 100, false));
+    ////var wgts = [0, -35.55, -59.45, -109.46, -136.46, 0]; // case in simulation of cable
+    ////g_all_wgt_units.push(create_wgt_unit(-327.50, 677.50, true));
+    ////g_all_wgt_units.push(create_wgt_unit(-189.25, 394.51, false));
+    ////g_all_wgt_units.push(create_wgt_unit(-59.83, 216.01, false));
+    ////g_all_wgt_units.push(create_wgt_unit(77.95, 125.85, false));
+    ////g_all_wgt_units.push(create_wgt_unit(228.17, 252.99, false));
+    ////g_all_wgt_units.push(create_wgt_unit(327.50, 600.05, true));
     //g_all_wgt_units.forEach(function (wgt_unit, i) { wgt_unit.fy = wgts[i]; });
     ////////////////////////////////////////////////////////////////////////////////////
     // for test !!!
@@ -147,13 +154,32 @@ function draw() {
         .on("mouseover", pin => { mouse_enter("pin", pin.fx, pin.fy, pin.loc.x, pin.loc.y); })
         .on("mouseout", function () { mouse_out(); });
 
-    // draw wgts
-    g_wgt_units.forEach(function (wgt_unit, i) {
-        draw_wgt_unit(g_structure, wgt_unit.id, -wgt_unit.fy, wgt_unit.loc.x, wgt_unit.loc.y - g_cbls[i].va.ey, g_hg_hgt, true, false); // true = large up dot, false = no drag
-        g_structure.selectAll("#wgt_unit_" + wgt_unit.id).transition().ease(d3.easeElastic).duration(1000)
-            .attr("transform", "translate(" + wgt_unit.loc.x + ", " + wgt_unit.loc.y + ")");
-    });
+    // draw groups for wgt unit
+    var d3_wgt_unit = g_structure.selectAll(".wgt_unit").data(g_wgt_units).join("g").classed("wgt_unit", true)
+        .attr("transform", (wgt_unit, i) => "translate(" + wgt_unit.loc.x + ", " + (wgt_unit.loc.y - g_cbls[i].va.ey)+ ")");
+    d3_wgt_unit.transition().ease(d3.easeElastic).duration(1000)
+        .attr("transform", wgt_unit => "translate(" + wgt_unit.loc.x + ", " + wgt_unit.loc.y + ")");
 
+    // wgt hg
+    d3_wgt_unit.selectAll(".wgt_hg").data([0]).join("line").classed("wgt_hg", true) // hanger
+        .attr("x1", 0).attr("y1", 0).attr("x2", 0).attr("y2", -g_hg_hgt)
+        .attr("style", "stroke:dimgrey; stroke-linejoin:round; stroke-linecap:round; stroke-width: 1");
+    d3_wgt_unit.selectAll(".up_hg_dot").data(wgt_unit => [wgt_unit]).join("circle").classed("up_hg_dot", true) // upper dot of hanger
+        .attr("cx", 0).attr("cy", 0).attr("r", gv_ele_unit / 3)
+        .attr("style", "fill:white; stroke-width:1; stroke:dimgrey")
+        .on("mouseover", function (d) { mouse_enter("dot", undefined, undefined, d.loc.x, d.loc.y); })
+        .on("mouseout", function () { mouse_out(); });
+    d3_wgt_unit.selectAll(".dn_hg_dot").data([0]).join("circle").classed("dn_hg_dot", true) // lower dot of hanger
+        .attr("cx", 0).attr("cy", -g_hg_hgt).attr("r", gv_ele_unit / 6)
+        .attr("style", "fill:white; stroke-width:1; stroke:dimgrey");
+
+    // wgt
+    d3_wgt_unit.selectAll(".wgt").data(wgt_unit => [wgt_unit]).join("rect").classed("wgt", true)
+        .attr("x", d => -Math.sqrt(-d.fy)).attr("y", d => -g_hg_hgt - Math.sqrt(-d.fy) * 2)
+        .attr("width", d => Math.sqrt(-d.fy) * 2).attr("height", d => Math.sqrt(-d.fy) * 2)
+        .attr("style", "fill:lightgrey; stroke:dimgrey")
+        .on("mouseover", function (d) { mouse_enter("wgt", undefined, -d.fy, d.loc.x); })
+        .on("mouseout", function () { mouse_out(); });
 }
 
 function create_wgt_unit(p_x, p_y, p_is_pin) {
